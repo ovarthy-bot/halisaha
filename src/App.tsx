@@ -1,7 +1,6 @@
 import { ArrowLeft, Cloud, CloudOff, Goal, Loader2, Menu, Settings, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pitch } from './components/Pitch'
-import { PlayerForm } from './components/PlayerForm'
 import { PlayerList } from './components/PlayerList'
 import { SettingsPanel } from './components/SettingsPanel'
 import { SettingsView } from './components/SettingsView'
@@ -194,11 +193,11 @@ export default function App() {
             rules={rules}
             onAddRule={handleAddRule}
             onDeleteRule={handleDeleteRule}
+            onAddPlayer={handleAddPlayer}
           />
         ) : (
           <div className="space-y-4">
             <SettingsPanel teamSize={teamSize} onTeamSizeChange={setTeamSize} onGenerate={handleGenerate} />
-            <PlayerForm onAdd={handleAddPlayer} />
             <PlayerList
               players={players}
               onDelete={handleDeletePlayer}

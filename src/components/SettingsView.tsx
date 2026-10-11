@@ -1,7 +1,6 @@
-import { Shield, Swords, Wand2 } from 'lucide-react'
-import type { ReactNode } from 'react'
 import { KIT_COLORS } from '../constants'
 import type { Player, Rule, TeamSettings } from '../types'
+import { PlayerForm } from './PlayerForm'
 import { RulesPanel } from './RulesPanel'
 
 interface SettingsViewProps {
@@ -13,6 +12,7 @@ interface SettingsViewProps {
   rules: Rule[]
   onAddRule: (rule: Omit<Rule, 'id'>) => void
   onDeleteRule: (id: string) => void
+  onAddPlayer: (player: Omit<Player, 'id'>) => void
 }
 
 function TeamKitEditor({
@@ -66,21 +66,6 @@ function TeamKitEditor({
   )
 }
 
-function DisabledStatPreview({ label, icon }: { label: string; icon: ReactNode }) {
-  return (
-    <div>
-      <div className="mb-1 flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
-          {icon}
-          {label}
-        </span>
-        <span className="rounded-md bg-gray-800 px-1.5 py-0.5 text-xs font-bold text-gray-500 tabular-nums">3</span>
-      </div>
-      <input type="range" min={1} max={5} value={3} disabled readOnly className="w-full cursor-not-allowed opacity-40" />
-    </div>
-  )
-}
-
 export function SettingsView({
   team1,
   team2,
@@ -90,6 +75,7 @@ export function SettingsView({
   rules,
   onAddRule,
   onDeleteRule,
+  onAddPlayer,
 }: SettingsViewProps) {
   return (
     <div className="space-y-4">
@@ -101,19 +87,9 @@ export function SettingsView({
         </div>
       </div>
 
-      <RulesPanel players={players} rules={rules} onAdd={onAddRule} onDelete={onDeleteRule} />
+      <PlayerForm onAdd={onAddPlayer} />
 
-      <div className="space-y-3 rounded-2xl border border-white/10 bg-gray-900/50 p-4 backdrop-blur-xl">
-        <h2 className="text-sm font-semibold text-white">Beceri Dengeleme</h2>
-        <div className="space-y-3">
-          <DisabledStatPreview label="Atak" icon={<Swords size={12} />} />
-          <DisabledStatPreview label="Defans" icon={<Shield size={12} />} />
-          <DisabledStatPreview label="Oyun Kurma" icon={<Wand2 size={12} />} />
-        </div>
-        <p className="text-[11px] text-gray-600">
-          Oyuncu beceri puanlarına göre dengeleme şu an pasif — yakında aktif edilecek.
-        </p>
-      </div>
+      <RulesPanel players={players} rules={rules} onAdd={onAddRule} onDelete={onDeleteRule} />
     </div>
   )
 }
