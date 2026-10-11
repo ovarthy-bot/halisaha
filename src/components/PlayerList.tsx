@@ -1,4 +1,4 @@
-import { Armchair, Trash2, Users } from 'lucide-react'
+import { Armchair, Trash2, Undo2, Users } from 'lucide-react'
 import { useState, type KeyboardEvent } from 'react'
 import { POSITION_COLORS, POSITION_HEX, POSITION_OPTIONS, POSITION_SHORT_LABELS } from '../constants'
 import type { Player, Position } from '../types'
@@ -6,13 +6,14 @@ import { overallRating } from '../types'
 
 interface PlayerListProps {
   players: Player[]
+  onBench: (id: string) => void
+  onRestore: (id: string) => void
   onDelete: (id: string) => void
   onSetPosition: (id: string, position: Position) => void
-  onToggleSubstitute: (id: string) => void
   onRename: (id: string, name: string) => void
 }
 
-export function PlayerList({ players, onDelete, onSetPosition, onToggleSubstitute, onRename }: PlayerListProps) {
+export function PlayerList({ players, onBench, onRestore, onDelete, onSetPosition, onRename }: PlayerListProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draftName, setDraftName] = useState('')
 
@@ -38,25 +39,24 @@ export function PlayerList({ players, onDelete, onSetPosition, onToggleSubstitut
   }
 
   function renderRow(player: Player) {
+    const isSub = player.isSubstitute
     return (
       <li
         key={player.id}
         className={`flex items-center gap-1.5 rounded-lg border border-white/5 bg-black/30 px-2.5 py-2 text-sm ${
-          player.isSubstitute ? 'opacity-60' : ''
+          isSub ? 'opacity-60' : ''
         }`}
       >
-        <button
-          onClick={() => onToggleSubstitute(player.id)}
-          className={`shrink-0 rounded-md p-1 transition ${
-            player.isSubstitute
-              ? 'text-orange-400 hover:bg-orange-400/10'
-              : 'text-gray-600 hover:bg-white/10 hover:text-gray-300'
-          }`}
-          title={player.isSubstitute ? 'Kadroya al' : 'Yedek olarak işaretle'}
-          aria-label={player.isSubstitute ? `${player.name} kadroya al` : `${player.name} yedek yap`}
-        >
-          <Armchair size={14} />
-        </button>
+        {isSub && (
+          <button
+            onClick={() => onRestore(player.id)}
+            className="shrink-0 rounded-md p-1 text-orange-400 transition hover:bg-orange-400/10"
+            title="Kadroya al"
+            aria-label={`${player.name} kadroya al`}
+          >
+            <Undo2 size={14} />
+          </button>
+        )}
 
         <select
           value={player.position}
@@ -96,9 +96,10 @@ export function PlayerList({ players, onDelete, onSetPosition, onToggleSubstitut
           {overallRating(player.stats)}
         </span>
         <button
-          onClick={() => onDelete(player.id)}
+          onClick={() => (isSub ? onDelete(player.id) : onBench(player.id))}
           className="shrink-0 rounded-md p-1 text-gray-500 transition hover:bg-red-500/10 hover:text-red-400"
-          aria-label={`${player.name} adlı oyuncuyu sil`}
+          title={isSub ? 'Kalıcı olarak sil' : 'Yedeğe taşı'}
+          aria-label={isSub ? `${player.name} adlı oyuncuyu kalıcı olarak sil` : `${player.name} adlı oyuncuyu yedeğe taşı`}
         >
           <Trash2 size={14} />
         </button>
@@ -109,33 +110,53 @@ export function PlayerList({ players, onDelete, onSetPosition, onToggleSubstitut
   const activePlayers = players.filter((p) => !p.isSubstitute)
   const substitutePlayers = players.filter((p) => p.isSubstitute)
 
-  return (
-    <div className="rounded-2xl border border-white/10 bg-gray-900/50 p-4 backdrop-blur-xl">
-      <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
-        <Users size={16} className="text-cyan-400" />
-        Oyuncu Kadrosu
-        <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-xs font-normal text-gray-300">
-          {players.length}
-        </span>
-      </h2>
-
-      {players.length === 0 ? (
+  if (players.length === 0) {
+    return (
+      <div className="rounded-2xl border border-white/10 bg-gray-900/50 p-4 backdrop-blur-xl">
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
+          <Users size={16} className="text-cyan-400" />
+          Oyuncu Kadrosu
+        </h2>
         <p className="py-6 text-center text-xs text-gray-500">Henüz oyuncu yok. İlk oyuncunu yukarıdan ekle.</p>
-      ) : (
-        <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
-          <ul className="space-y-1.5">{activePlayers.map(renderRow)}</ul>
+      </div>
+    )
+  }
 
-          {substitutePlayers.length > 0 && (
-            <div>
-              <h3 className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-orange-300/80">
-                <Armchair size={12} />
-                Yedekler ({substitutePlayers.length})
-              </h3>
-              <ul className="space-y-1.5">{substitutePlayers.map(renderRow)}</ul>
-            </div>
-          )}
-        </div>
-      )}
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-white/10 bg-gray-900/50 p-4 backdrop-blur-xl">
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
+          <Users size={16} className="text-cyan-400" />
+          Oyuncu Kadrosu
+          <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-xs font-normal text-gray-300">
+            {activePlayers.length}
+          </span>
+        </h2>
+
+        {activePlayers.length === 0 ? (
+          <p className="py-4 text-center text-xs text-gray-500">Aktif oyuncu yok, hepsi yedekte.</p>
+        ) : (
+          <ul className="max-h-64 space-y-1.5 overflow-y-auto pr-1">{activePlayers.map(renderRow)}</ul>
+        )}
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-gray-900/50 p-4 backdrop-blur-xl">
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-orange-300/80">
+          <Armchair size={16} />
+          Yedek Oyuncular
+          <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-xs font-normal text-gray-300">
+            {substitutePlayers.length}
+          </span>
+        </h2>
+
+        {substitutePlayers.length === 0 ? (
+          <p className="py-4 text-center text-xs text-gray-500">
+            Henüz yedek yok. Kadrodaki bir oyuncuyu çöp kutusu ile buraya taşıyabilirsin.
+          </p>
+        ) : (
+          <ul className="max-h-48 space-y-1.5 overflow-y-auto pr-1">{substitutePlayers.map(renderRow)}</ul>
+        )}
+      </div>
     </div>
   )
 }

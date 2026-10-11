@@ -1,33 +1,18 @@
 import { Sparkles } from 'lucide-react'
-import { TEAM_SIZE_OPTIONS } from '../constants'
 
 interface SettingsPanelProps {
   teamSize: number
-  onTeamSizeChange: (size: number) => void
   onGenerate: () => void
 }
 
-export function SettingsPanel({ teamSize, onTeamSizeChange, onGenerate }: SettingsPanelProps) {
+export function SettingsPanel({ teamSize, onGenerate }: SettingsPanelProps) {
   return (
     <div className="space-y-3 rounded-2xl border border-white/10 bg-gray-900/50 p-4 backdrop-blur-xl">
-      <h2 className="text-sm font-semibold text-white">Maç Ayarları</h2>
-
-      <div>
-        <label htmlFor="team-size" className="mb-1 block text-xs font-medium text-gray-400">
-          Takım Boyutu
-        </label>
-        <select
-          id="team-size"
-          value={teamSize}
-          onChange={(e) => onTeamSizeChange(Number(e.target.value))}
-          className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
-        >
-          {TEAM_SIZE_OPTIONS.map((size) => (
-            <option key={size} value={size} className="bg-gray-900">
-              {size}v{size} ({size * 2} oyuncu)
-            </option>
-          ))}
-        </select>
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-white">Maç Ayarları</h2>
+        <span className="text-xs text-gray-500">
+          {teamSize}v{teamSize} ({teamSize * 2} oyuncu)
+        </span>
       </div>
 
       <button

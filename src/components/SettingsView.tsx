@@ -1,18 +1,23 @@
-import { KIT_COLORS } from '../constants'
-import type { Player, Rule, TeamSettings } from '../types'
+import { KIT_COLORS, TEAM_SIZE_OPTIONS } from '../constants'
+import type { Player, PlayerStats, Rule, TeamSettings } from '../types'
 import { PlayerForm } from './PlayerForm'
 import { RulesPanel } from './RulesPanel'
+import { SkillBalancePanel } from './SkillBalancePanel'
 
 interface SettingsViewProps {
+  teamSize: number
+  onTeamSizeChange: (size: number) => void
   team1: TeamSettings
   team2: TeamSettings
   onTeam1Change: (settings: TeamSettings) => void
   onTeam2Change: (settings: TeamSettings) => void
   players: Player[]
+  allPlayers: Player[]
   rules: Rule[]
   onAddRule: (rule: Omit<Rule, 'id'>) => void
   onDeleteRule: (id: string) => void
   onAddPlayer: (player: Omit<Player, 'id'>) => void
+  onUpdateStats: (id: string, stats: PlayerStats) => void
 }
 
 function TeamKitEditor({
@@ -67,18 +72,43 @@ function TeamKitEditor({
 }
 
 export function SettingsView({
+  teamSize,
+  onTeamSizeChange,
   team1,
   team2,
   onTeam1Change,
   onTeam2Change,
   players,
+  allPlayers,
   rules,
   onAddRule,
   onDeleteRule,
   onAddPlayer,
+  onUpdateStats,
 }: SettingsViewProps) {
   return (
     <div className="space-y-4">
+      <div className="space-y-3 rounded-2xl border border-white/10 bg-gray-900/50 p-4 backdrop-blur-xl">
+        <h2 className="text-sm font-semibold text-white">Maç Ayarları</h2>
+        <div>
+          <label htmlFor="team-size" className="mb-1 block text-xs font-medium text-gray-400">
+            Takım Boyutu
+          </label>
+          <select
+            id="team-size"
+            value={teamSize}
+            onChange={(e) => onTeamSizeChange(Number(e.target.value))}
+            className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+          >
+            {TEAM_SIZE_OPTIONS.map((size) => (
+              <option key={size} value={size} className="bg-gray-900">
+                {size}v{size} ({size * 2} oyuncu)
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div className="space-y-3 rounded-2xl border border-white/10 bg-gray-900/50 p-4 backdrop-blur-xl">
         <h2 className="text-sm font-semibold text-white">Takım Kitleri</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -88,6 +118,8 @@ export function SettingsView({
       </div>
 
       <PlayerForm onAdd={onAddPlayer} />
+
+      <SkillBalancePanel players={allPlayers} onUpdateStats={onUpdateStats} />
 
       <RulesPanel players={players} rules={rules} onAdd={onAddRule} onDelete={onDeleteRule} />
     </div>

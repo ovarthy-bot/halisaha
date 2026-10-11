@@ -9,7 +9,7 @@ import { Toast, type ToastMessage } from './components/Toast'
 import { TeamSummary } from './components/TeamSummary'
 import { defaultPlayers } from './data/defaultPlayers'
 import { isSupabaseConfigured, loadSquadState, saveSquadState } from './lib/squadState'
-import type { BalancedTeams, Player, Position, Rule, TeamId, TeamSettings } from './types'
+import type { BalancedTeams, Player, PlayerStats, Position, Rule, TeamId, TeamSettings } from './types'
 import { generateBalancedTeams } from './utils/balance'
 
 type SyncStatus = 'offline' | 'loading' | 'saving' | 'saved' | 'error'
@@ -23,7 +23,7 @@ function createId() {
 export default function App() {
   const [players, setPlayers] = useState<Player[]>(defaultPlayers)
   const [rules, setRules] = useState<Rule[]>([])
-  const [teamSize, setTeamSize] = useState(7)
+  const [teamSize, setTeamSize] = useState(6)
   const [team1Settings, setTeam1Settings] = useState<TeamSettings>({ name: 'Takım 1', color: '#22c55e' })
   const [team2Settings, setTeam2Settings] = useState<TeamSettings>({ name: 'Takım 2', color: '#3b82f6' })
   const [balanced, setBalanced] = useState<BalancedTeams | null>(null)
@@ -100,12 +100,20 @@ export default function App() {
     setPlayers((prev) => prev.map((p) => (p.id === id ? { ...p, position } : p)))
   }
 
-  function handleToggleSubstitute(id: string) {
-    setPlayers((prev) => prev.map((p) => (p.id === id ? { ...p, isSubstitute: !p.isSubstitute } : p)))
+  function handleBenchPlayer(id: string) {
+    setPlayers((prev) => prev.map((p) => (p.id === id ? { ...p, isSubstitute: true } : p)))
+  }
+
+  function handleRestorePlayer(id: string) {
+    setPlayers((prev) => prev.map((p) => (p.id === id ? { ...p, isSubstitute: false } : p)))
   }
 
   function handleRenamePlayer(id: string, name: string) {
     setPlayers((prev) => prev.map((p) => (p.id === id ? { ...p, name } : p)))
+  }
+
+  function handleUpdateStats(id: string, stats: PlayerStats) {
+    setPlayers((prev) => prev.map((p) => (p.id === id ? { ...p, stats } : p)))
   }
 
   function handleAddRule(rule: Omit<Rule, 'id'>) {
@@ -186,24 +194,29 @@ export default function App() {
 
         {settingsOpen ? (
           <SettingsView
+            teamSize={teamSize}
+            onTeamSizeChange={setTeamSize}
             team1={team1Settings}
             team2={team2Settings}
             onTeam1Change={setTeam1Settings}
             onTeam2Change={setTeam2Settings}
             players={players.filter((p) => !p.isSubstitute)}
+            allPlayers={players}
             rules={rules}
             onAddRule={handleAddRule}
             onDeleteRule={handleDeleteRule}
             onAddPlayer={handleAddPlayer}
+            onUpdateStats={handleUpdateStats}
           />
         ) : (
           <div className="space-y-4">
-            <SettingsPanel teamSize={teamSize} onTeamSizeChange={setTeamSize} onGenerate={handleGenerate} />
+            <SettingsPanel teamSize={teamSize} onGenerate={handleGenerate} />
             <PlayerList
               players={players}
+              onBench={handleBenchPlayer}
+              onRestore={handleRestorePlayer}
               onDelete={handleDeletePlayer}
               onSetPosition={handleSetPosition}
-              onToggleSubstitute={handleToggleSubstitute}
               onRename={handleRenamePlayer}
             />
           </div>
