@@ -445,7 +445,7 @@ export default function App() {
       {balanced && !rosterOpen && (
         <button
           onClick={() => setRosterOpen(true)}
-          className="fixed top-4 right-4 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 px-4 py-2.5 text-sm font-bold text-black shadow-xl shadow-cyan-500/30"
+          className="fixed right-4 bottom-20 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 px-4 py-2.5 text-sm font-bold text-black shadow-xl shadow-cyan-500/30 lg:bottom-5"
           aria-label="Kadro listesini aç"
         >
           <Users size={18} />
