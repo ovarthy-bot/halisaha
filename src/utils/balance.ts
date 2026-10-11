@@ -171,20 +171,34 @@ function solveComponents(
   return { group0BlockIds, group1BlockIds }
 }
 
-export function generateBalancedTeams(players: Player[], teamSize: number, rules: Rule[] = []): BalanceOutcome {
+/** Fisher-Yates shuffle, used so repeated generations can land on different (still-optimal) ties. */
+function shuffled<T>(items: T[]): T[] {
+  const result = [...items]
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[result[i], result[j]] = [result[j], result[i]]
+  }
+  return result
+}
+
+export function generateBalancedTeams(inputPlayers: Player[], teamSize: number, rules: Rule[] = []): BalanceOutcome {
   const required = teamSize * 2
 
-  if (players.length === 0) {
+  if (inputPlayers.length === 0) {
     return { ok: false, error: 'Takımları oluşturmadan önce oyuncu ekleyin.' }
   }
 
-  if (players.length !== required) {
-    const word = players.length > required ? 'fazla' : 'eksik'
+  if (inputPlayers.length !== required) {
+    const word = inputPlayers.length > required ? 'fazla' : 'eksik'
     return {
       ok: false,
-      error: `${teamSize}v${teamSize} için oyuncu sayınız ${word}: tam olarak ${required} kişi gerekiyor, şu an ${players.length} kişi var.`,
+      error: `${teamSize}v${teamSize} için oyuncu sayınız ${word}: tam olarak ${required} kişi gerekiyor, şu an ${inputPlayers.length} kişi var.`,
     }
   }
+
+  // Shuffled so the deterministic tie-breaking below (keeper pairing, DP reconstruction) picks a
+  // different — but still rating-optimal — split each time players tie on rating.
+  const players = shuffled(inputPlayers)
 
   const keepersAll = players.filter((p) => p.position === 'gk')
   if (keepersAll.length < 2) {
