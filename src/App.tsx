@@ -1,4 +1,4 @@
-import { ArrowLeft, Cloud, CloudOff, Goal, Loader2, Menu, Settings, Users, X } from 'lucide-react'
+import { ArrowLeft, BookmarkPlus, Cloud, CloudOff, Goal, Loader2, Menu, Settings, Trash2, Users, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pitch } from './components/Pitch'
 import { PlayerList } from './components/PlayerList'
@@ -9,7 +9,7 @@ import { Toast, type ToastMessage } from './components/Toast'
 import { TeamSummary } from './components/TeamSummary'
 import { defaultPlayers } from './data/defaultPlayers'
 import { isSupabaseConfigured, loadSquadState, saveSquadState } from './lib/squadState'
-import type { BalancedTeams, Player, PlayerStats, Position, Rule, TeamId, TeamSettings } from './types'
+import type { BalancedTeams, PitchPositions, Player, PlayerStats, Position, Rule, SavedFormation, TeamId, TeamSettings } from './types'
 import { generateBalancedTeams } from './utils/balance'
 
 type SyncStatus = 'offline' | 'loading' | 'saving' | 'saved' | 'error'
@@ -27,47 +27,65 @@ export default function App() {
   const [team1Settings, setTeam1Settings] = useState<TeamSettings>({ name: 'Takım 1', color: '#22c55e' })
   const [team2Settings, setTeam2Settings] = useState<TeamSettings>({ name: 'Takım 2', color: '#3b82f6' })
   const [balanced, setBalanced] = useState<BalancedTeams | null>(null)
+  const [pitchPositions, setPitchPositions] = useState<PitchPositions>({})
+  const [favorites, setFavorites] = useState<SavedFormation[]>([])
+  const [favoriteName, setFavoriteName] = useState('')
+  const [selectedFavoriteId, setSelectedFavoriteId] = useState('')
+  const [hasLoaded, setHasLoaded] = useState(false)
   const [toast, setToast] = useState<ToastMessage | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [rosterOpen, setRosterOpen] = useState(false)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(isSupabaseConfigured ? 'loading' : 'offline')
 
-  const hasLoadedRef = useRef(!isSupabaseConfigured)
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return
+    let cancelled = false
 
-    loadSquadState().then(({ ok, state }) => {
-      if (state) {
-        setPlayers(state.players)
-        setRules(state.rules)
-        setTeamSize(state.teamSize)
-        setTeam1Settings(state.team1Settings)
-        setTeam2Settings(state.team2Settings)
-      }
-      hasLoadedRef.current = true
-      setSyncStatus(ok ? 'saved' : 'error')
-    })
+    loadSquadState()
+      .then(({ ok, state }) => {
+        if (cancelled) return
+        if (state) {
+          setPlayers(state.players)
+          setRules(state.rules)
+          setTeamSize(state.teamSize)
+          setTeam1Settings(state.team1Settings)
+          setTeam2Settings(state.team2Settings)
+          setBalanced(state.balanced)
+          setPitchPositions(state.pitchPositions)
+          setFavorites(state.favorites)
+        }
+        setHasLoaded(true)
+        setSyncStatus(isSupabaseConfigured ? (ok ? 'saved' : 'error') : 'offline')
+      })
+      .catch(() => {
+        if (cancelled) return
+        setHasLoaded(true)
+        setSyncStatus(isSupabaseConfigured ? 'error' : 'offline')
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !hasLoadedRef.current) return
+    if (!hasLoaded) return
 
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
 
-    setSyncStatus('saving')
+    setSyncStatus(isSupabaseConfigured ? 'saving' : 'offline')
     saveTimeoutRef.current = setTimeout(() => {
-      saveSquadState({ players, rules, teamSize, team1Settings, team2Settings }).then((ok) => {
-        setSyncStatus(ok ? 'saved' : 'error')
-      })
+      saveSquadState({ players, rules, teamSize, team1Settings, team2Settings, balanced, pitchPositions, favorites })
+        .then((ok) => setSyncStatus(isSupabaseConfigured ? (ok ? 'saved' : 'error') : 'offline'))
+        .catch(() => setSyncStatus(isSupabaseConfigured ? 'error' : 'offline'))
     }, 800)
 
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     }
-  }, [players, rules, teamSize, team1Settings, team2Settings])
+  }, [hasLoaded, players, rules, teamSize, team1Settings, team2Settings, balanced, pitchPositions, favorites])
 
   const difference = useMemo(() => {
     if (!balanced) return 0
@@ -93,6 +111,11 @@ export default function App() {
   function handleDeletePlayer(id: string) {
     setPlayers((prev) => prev.filter((p) => p.id !== id))
     setRules((prev) => prev.filter((r) => r.player1Id !== id && r.player2Id !== id))
+    setPitchPositions((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
     setBalanced(null)
   }
 
@@ -133,6 +156,8 @@ export default function App() {
       return
     }
     setBalanced({ team1: outcome.result.team1, team2: outcome.result.team2 })
+    setPitchPositions({})
+    setSelectedFavoriteId('')
     showToast(`Takımlar oluşturuldu! Puan farkı: ${outcome.result.difference}.`, 'success')
     setSidebarOpen(false)
     setSettingsOpen(false)
@@ -151,6 +176,59 @@ export default function App() {
 
       return from === 'team1' ? { team1: nextSource, team2: nextTarget } : { team1: nextTarget, team2: nextSource }
     })
+  }
+
+  function handlePitchPositionChange(playerId: string, position: PitchPositions[string]) {
+    setPitchPositions((prev) => ({ ...prev, [playerId]: position }))
+  }
+
+  function handlePitchPositionCommit(playerId: string, position: PitchPositions[string]) {
+    const nextPositions = { ...pitchPositions, [playerId]: position }
+    setPitchPositions(nextPositions)
+
+    // Save as soon as dragging ends, instead of depending only on the debounce.
+    const state = { players, rules, teamSize, team1Settings, team2Settings, balanced, pitchPositions: nextPositions, favorites }
+    setSyncStatus(isSupabaseConfigured ? 'saving' : 'offline')
+    void saveSquadState(state)
+      .then((ok) => setSyncStatus(isSupabaseConfigured ? (ok ? 'saved' : 'error') : 'offline'))
+      .catch(() => setSyncStatus(isSupabaseConfigured ? 'error' : 'offline'))
+  }
+
+  function handleSaveFavorite() {
+    const name = favoriteName.trim()
+    if (!balanced || !name) return
+
+    const favorite: SavedFormation = {
+      id: createId(),
+      name,
+      balanced: { team1: [...balanced.team1], team2: [...balanced.team2] },
+      pitchPositions: { ...pitchPositions },
+      team1Settings: { ...team1Settings },
+      team2Settings: { ...team2Settings },
+      createdAt: new Date().toISOString(),
+    }
+    setFavorites((prev) => [favorite, ...prev])
+    setSelectedFavoriteId(favorite.id)
+    setFavoriteName('')
+    showToast(`“${name}” favorilere eklendi.`, 'success')
+  }
+
+  function handleLoadFavorite() {
+    const favorite = favorites.find((item) => item.id === selectedFavoriteId)
+    if (!favorite) return
+    setBalanced({ team1: [...favorite.balanced.team1], team2: [...favorite.balanced.team2] })
+    setPitchPositions({ ...favorite.pitchPositions })
+    setTeam1Settings({ ...favorite.team1Settings })
+    setTeam2Settings({ ...favorite.team2Settings })
+    showToast(`“${favorite.name}” dizilimi yüklendi.`, 'success')
+  }
+
+  function handleDeleteFavorite() {
+    const favorite = favorites.find((item) => item.id === selectedFavoriteId)
+    if (!favorite) return
+    setFavorites((prev) => prev.filter((item) => item.id !== selectedFavoriteId))
+    setSelectedFavoriteId('')
+    showToast(`“${favorite.name}” favorilerden silindi.`, 'success')
   }
 
   return (
@@ -234,6 +312,63 @@ export default function App() {
 
       {/* Main pitch area */}
       <main className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 pb-24 lg:pb-4">
+        {(balanced || favorites.length > 0) && (
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-2 sm:p-3">
+            <div className="flex min-w-0 flex-1 basis-full gap-2 sm:basis-auto">
+              <label htmlFor="favorite-formation-name" className="sr-only">Favori dizilim adı</label>
+              <input
+                id="favorite-formation-name"
+                value={favoriteName}
+                onChange={(event) => setFavoriteName(event.target.value)}
+                onKeyDown={(event) => { if (event.key === 'Enter') handleSaveFavorite() }}
+                placeholder="Dizilime isim ver..."
+                maxLength={50}
+                className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none placeholder:text-gray-500 focus:border-emerald-400/70"
+              />
+              <button
+                onClick={handleSaveFavorite}
+                disabled={!balanced || !favoriteName.trim()}
+                className="flex shrink-0 items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2 text-sm font-bold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-40"
+                title="Mevcut takım ve saha dizilimini favorilere kaydet"
+              >
+                <BookmarkPlus size={16} />
+                <span className="hidden sm:inline">Favoriye kaydet</span>
+                <span className="sm:hidden">Kaydet</span>
+              </button>
+            </div>
+            {favorites.length > 0 && (
+              <>
+                <label htmlFor="favorite-formation-select" className="sr-only">Kayıtlı favori dizilim</label>
+                <select
+                  id="favorite-formation-select"
+                  value={selectedFavoriteId}
+                  onChange={(event) => setSelectedFavoriteId(event.target.value)}
+                  className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#111916] px-3 py-2 text-sm text-white outline-none focus:border-cyan-400/70"
+                >
+                  <option value="">Favori dizilim seç...</option>
+                  {favorites.map((favorite) => <option key={favorite.id} value={favorite.id}>{favorite.name}</option>)}
+                </select>
+                <button
+                  onClick={handleLoadFavorite}
+                  disabled={!selectedFavoriteId}
+                  className="rounded-lg border border-cyan-400/30 px-3 py-2 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-400/10 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Yükle
+                </button>
+                <button
+                  onClick={handleDeleteFavorite}
+                  disabled={!selectedFavoriteId}
+                  className="rounded-lg border border-red-400/25 p-2 text-red-300 transition hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Seçili favori dizilimi sil"
+                  title="Favoriyi sil"
+                >
+                  <Trash2 size={17} />
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
         {balanced && (
           <TeamSummary
             team1Settings={team1Settings}
@@ -244,12 +379,20 @@ export default function App() {
           />
         )}
 
+        {balanced && (
+          <p className="mb-1 text-center text-[11px] text-gray-500">
+            Sahadaki formaları sürükleyerek konumlarını değiştirebilirsiniz.
+          </p>
+        )}
         <div className="flex min-h-0 flex-1 w-full items-center justify-center">
           <Pitch
             team1={balanced?.team1 ?? []}
             team2={balanced?.team2 ?? []}
             team1Settings={team1Settings}
             team2Settings={team2Settings}
+            positions={pitchPositions}
+            onPositionChange={handlePitchPositionChange}
+            onPositionCommit={handlePitchPositionCommit}
           />
         </div>
       </main>
@@ -328,7 +471,7 @@ function SyncIndicator({ status }: { status: SyncStatus }) {
     return (
       <span
         className="flex items-center gap-1 text-xs text-gray-500"
-        title="Supabase yapılandırılmadı — değişiklikler yalnızca bu cihazda kalır"
+        title="Supabase yapılandırılmadı — kadro ve dizilim bu tarayıcıda saklanır"
       >
         <CloudOff size={13} />
         Yalnızca yerel

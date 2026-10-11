@@ -8,11 +8,17 @@ create table if not exists app_state (
   team_size integer not null default 6,
   team1 jsonb not null default '{"name":"Takım 1","color":"#22c55e"}',
   team2 jsonb not null default '{"name":"Takım 2","color":"#3b82f6"}',
+  balanced_teams jsonb,
+  pitch_positions jsonb not null default '{}'::jsonb,
+  favorites jsonb not null default '[]'::jsonb,
   updated_at timestamptz not null default now()
 );
 
--- If the table already exists from before the "rules" feature was added:
+-- Safe migrations for projects whose app_state table already exists.
 alter table app_state add column if not exists rules jsonb not null default '[]';
+alter table app_state add column if not exists balanced_teams jsonb;
+alter table app_state add column if not exists pitch_positions jsonb not null default '{}'::jsonb;
+alter table app_state add column if not exists favorites jsonb not null default '[]'::jsonb;
 
 alter table app_state enable row level security;
 

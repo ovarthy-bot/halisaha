@@ -35,6 +35,24 @@ export interface BalancedTeams {
   team2: Player[]
 }
 
+/** Coordinates use the pitch's logical axes; on narrow screens the axes are rotated by CSS. */
+export interface PitchPosition {
+  main: number
+  cross: number
+}
+
+export type PitchPositions = Record<string, PitchPosition>
+
+export interface SavedFormation {
+  id: string
+  name: string
+  balanced: BalancedTeams
+  pitchPositions: PitchPositions
+  team1Settings: TeamSettings
+  team2Settings: TeamSettings
+  createdAt: string
+}
+
 export function overallRating(stats: PlayerStats): number {
   return stats.attack + stats.defense + stats.playmaking
 }
