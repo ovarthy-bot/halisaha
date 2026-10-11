@@ -1,13 +1,18 @@
-import { Goal, Menu, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Cloud, CloudOff, Goal, Loader2, Menu, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pitch } from './components/Pitch'
 import { PlayerForm } from './components/PlayerForm'
 import { PlayerList } from './components/PlayerList'
+import { RulesPanel } from './components/RulesPanel'
 import { SettingsPanel } from './components/SettingsPanel'
+import { TeamRosterEditor } from './components/TeamRosterEditor'
 import { Toast, type ToastMessage } from './components/Toast'
 import { TeamSummary } from './components/TeamSummary'
-import type { BalancedTeams, Player, TeamSettings } from './types'
+import { isSupabaseConfigured, loadSquadState, saveSquadState } from './lib/squadState'
+import type { BalancedTeams, Player, Rule, TeamId, TeamSettings } from './types'
 import { generateBalancedTeams } from './utils/balance'
+
+type SyncStatus = 'offline' | 'loading' | 'saving' | 'saved' | 'error'
 
 let nextId = 0
 function createId() {
@@ -17,12 +22,50 @@ function createId() {
 
 export default function App() {
   const [players, setPlayers] = useState<Player[]>([])
+  const [rules, setRules] = useState<Rule[]>([])
   const [teamSize, setTeamSize] = useState(6)
   const [team1Settings, setTeam1Settings] = useState<TeamSettings>({ name: 'Team 1', color: '#22c55e' })
   const [team2Settings, setTeam2Settings] = useState<TeamSettings>({ name: 'Team 2', color: '#3b82f6' })
   const [balanced, setBalanced] = useState<BalancedTeams | null>(null)
   const [toast, setToast] = useState<ToastMessage | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(isSupabaseConfigured ? 'loading' : 'offline')
+
+  const hasLoadedRef = useRef(!isSupabaseConfigured)
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return
+
+    loadSquadState().then((state) => {
+      if (state) {
+        setPlayers(state.players)
+        setRules(state.rules)
+        setTeamSize(state.teamSize)
+        setTeam1Settings(state.team1Settings)
+        setTeam2Settings(state.team2Settings)
+      }
+      hasLoadedRef.current = true
+      setSyncStatus('saved')
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !hasLoadedRef.current) return
+
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+
+    setSyncStatus('saving')
+    saveTimeoutRef.current = setTimeout(() => {
+      saveSquadState({ players, rules, teamSize, team1Settings, team2Settings }).then((ok) => {
+        setSyncStatus(ok ? 'saved' : 'error')
+      })
+    }, 800)
+
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    }
+  }, [players, rules, teamSize, team1Settings, team2Settings])
 
   const difference = useMemo(() => {
     if (!balanced) return 0
@@ -47,11 +90,20 @@ export default function App() {
 
   function handleDeletePlayer(id: string) {
     setPlayers((prev) => prev.filter((p) => p.id !== id))
+    setRules((prev) => prev.filter((r) => r.player1Id !== id && r.player2Id !== id))
     setBalanced(null)
   }
 
+  function handleAddRule(rule: Omit<Rule, 'id'>) {
+    setRules((prev) => [...prev, { ...rule, id: createId() }])
+  }
+
+  function handleDeleteRule(id: string) {
+    setRules((prev) => prev.filter((r) => r.id !== id))
+  }
+
   function handleGenerate() {
-    const outcome = generateBalancedTeams(players, teamSize)
+    const outcome = generateBalancedTeams(players, teamSize, rules)
     if (!outcome.ok) {
       showToast(outcome.error, 'error')
       setBalanced(null)
@@ -63,6 +115,21 @@ export default function App() {
       'success',
     )
     setSidebarOpen(false)
+  }
+
+  function handleMovePlayer(playerId: string, from: TeamId) {
+    setBalanced((prev) => {
+      if (!prev) return prev
+      const source = from === 'team1' ? prev.team1 : prev.team2
+      const target = from === 'team1' ? prev.team2 : prev.team1
+      const player = source.find((p) => p.id === playerId)
+      if (!player) return prev
+
+      const nextSource = source.filter((p) => p.id !== playerId)
+      const nextTarget = [...target, player]
+
+      return from === 'team1' ? { team1: nextSource, team2: nextTarget } : { team1: nextTarget, team2: nextSource }
+    })
   }
 
   return (
@@ -80,13 +147,16 @@ export default function App() {
             <Goal className="text-emerald-400" size={22} />
             Squad Builder
           </h1>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="rounded-full p-1.5 text-gray-400 hover:bg-white/10 lg:hidden"
-            aria-label="Close panel"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <SyncIndicator status={syncStatus} />
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="rounded-full p-1.5 text-gray-400 hover:bg-white/10 lg:hidden"
+              aria-label="Close panel"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -101,6 +171,7 @@ export default function App() {
           />
           <PlayerForm onAdd={handleAddPlayer} />
           <PlayerList players={players} onDelete={handleDeletePlayer} />
+          <RulesPanel players={players} rules={rules} onAdd={handleAddRule} onDelete={handleDeleteRule} />
         </div>
       </aside>
 
@@ -124,6 +195,15 @@ export default function App() {
             difference={difference}
           />
         )}
+        {balanced && (
+          <TeamRosterEditor
+            team1={balanced.team1}
+            team2={balanced.team2}
+            team1Settings={team1Settings}
+            team2Settings={team2Settings}
+            onMovePlayer={handleMovePlayer}
+          />
+        )}
         <Pitch
           team1={balanced?.team1 ?? []}
           team2={balanced?.team2 ?? []}
@@ -143,5 +223,46 @@ export default function App() {
         </button>
       )}
     </div>
+  )
+}
+
+function SyncIndicator({ status }: { status: SyncStatus }) {
+  if (status === 'offline') {
+    return (
+      <span className="flex items-center gap-1 text-xs text-gray-500" title="Supabase not configured — changes stay local only">
+        <CloudOff size={13} />
+        Local only
+      </span>
+    )
+  }
+  if (status === 'loading') {
+    return (
+      <span className="flex items-center gap-1 text-xs text-gray-400">
+        <Loader2 size={13} className="animate-spin" />
+        Loading...
+      </span>
+    )
+  }
+  if (status === 'saving') {
+    return (
+      <span className="flex items-center gap-1 text-xs text-cyan-300">
+        <Loader2 size={13} className="animate-spin" />
+        Saving...
+      </span>
+    )
+  }
+  if (status === 'error') {
+    return (
+      <span className="flex items-center gap-1 text-xs text-red-400" title="Could not reach Supabase">
+        <CloudOff size={13} />
+        Sync error
+      </span>
+    )
+  }
+  return (
+    <span className="flex items-center gap-1 text-xs text-emerald-400">
+      <Cloud size={13} />
+      Saved
+    </span>
   )
 }

@@ -13,6 +13,15 @@ export interface Player {
 
 export type TeamId = 'team1' | 'team2'
 
+export type RuleType = 'together' | 'apart'
+
+export interface Rule {
+  id: string
+  type: RuleType
+  player1Id: string
+  player2Id: string
+}
+
 export interface TeamSettings {
   name: string
   color: string
