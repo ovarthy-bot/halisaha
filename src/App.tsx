@@ -10,7 +10,7 @@ import { Toast, type ToastMessage } from './components/Toast'
 import { TeamSummary } from './components/TeamSummary'
 import { defaultPlayers } from './data/defaultPlayers'
 import { isSupabaseConfigured, loadSquadState, saveSquadState } from './lib/squadState'
-import type { BalancedTeams, Player, Rule, TeamId, TeamSettings } from './types'
+import type { BalancedTeams, Player, Position, Rule, TeamId, TeamSettings } from './types'
 import { generateBalancedTeams } from './utils/balance'
 
 type SyncStatus = 'offline' | 'loading' | 'saving' | 'saved' | 'error'
@@ -95,8 +95,12 @@ export default function App() {
     setBalanced(null)
   }
 
-  function handleToggleGoalkeeper(id: string) {
-    setPlayers((prev) => prev.map((p) => (p.id === id ? { ...p, isGoalkeeper: !p.isGoalkeeper } : p)))
+  function handleSetPosition(id: string, position: Position) {
+    setPlayers((prev) => prev.map((p) => (p.id === id ? { ...p, position } : p)))
+  }
+
+  function handleToggleSubstitute(id: string) {
+    setPlayers((prev) => prev.map((p) => (p.id === id ? { ...p, isSubstitute: !p.isSubstitute } : p)))
   }
 
   function handleRenamePlayer(id: string, name: string) {
@@ -112,7 +116,8 @@ export default function App() {
   }
 
   function handleGenerate() {
-    const outcome = generateBalancedTeams(players, teamSize, rules)
+    const activePlayers = players.filter((p) => !p.isSubstitute)
+    const outcome = generateBalancedTeams(activePlayers, teamSize, rules)
     if (!outcome.ok) {
       showToast(outcome.error, 'error')
       setBalanced(null)
@@ -179,10 +184,16 @@ export default function App() {
           <PlayerList
             players={players}
             onDelete={handleDeletePlayer}
-            onToggleGoalkeeper={handleToggleGoalkeeper}
+            onSetPosition={handleSetPosition}
+            onToggleSubstitute={handleToggleSubstitute}
             onRename={handleRenamePlayer}
           />
-          <RulesPanel players={players} rules={rules} onAdd={handleAddRule} onDelete={handleDeleteRule} />
+          <RulesPanel
+            players={players.filter((p) => !p.isSubstitute)}
+            rules={rules}
+            onAdd={handleAddRule}
+            onDelete={handleDeleteRule}
+          />
         </div>
       </aside>
 
@@ -196,7 +207,7 @@ export default function App() {
       )}
 
       {/* Main pitch area */}
-      <main className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto p-4 pb-24 lg:pb-4">
+      <main className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 pb-24 lg:pb-4">
         {balanced && (
           <TeamSummary
             team1Settings={team1Settings}
@@ -206,21 +217,27 @@ export default function App() {
             difference={difference}
           />
         )}
-        {balanced && (
-          <TeamRosterEditor
-            team1={balanced.team1}
-            team2={balanced.team2}
+
+        <div className="flex min-h-0 flex-1 w-full items-center justify-center">
+          <Pitch
+            team1={balanced?.team1 ?? []}
+            team2={balanced?.team2 ?? []}
             team1Settings={team1Settings}
             team2Settings={team2Settings}
-            onMovePlayer={handleMovePlayer}
           />
+        </div>
+
+        {balanced && (
+          <div className="mt-3 w-full shrink-0 overflow-y-auto" style={{ maxHeight: '32vh' }}>
+            <TeamRosterEditor
+              team1={balanced.team1}
+              team2={balanced.team2}
+              team1Settings={team1Settings}
+              team2Settings={team2Settings}
+              onMovePlayer={handleMovePlayer}
+            />
+          </div>
         )}
-        <Pitch
-          team1={balanced?.team1 ?? []}
-          team2={balanced?.team2 ?? []}
-          team1Settings={team1Settings}
-          team2Settings={team2Settings}
-        />
       </main>
 
       {/* Mobile toggle button */}

@@ -28,7 +28,7 @@ export function PlayerJersey({ player, color, main, cross }: PlayerJerseyProps) 
     >
       <div className="relative drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
         <Shirt size={30} fill={color} color="rgba(0,0,0,0.35)" strokeWidth={1.25} />
-        {player.isGoalkeeper && (
+        {player.position === 'gk' && (
           <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-black/40 bg-amber-400 text-[8px] font-black text-black">
             GK
           </span>

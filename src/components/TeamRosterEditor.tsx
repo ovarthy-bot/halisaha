@@ -42,7 +42,7 @@ function Column({
               <ArrowLeftRight size={12} />
             </button>
           )}
-          {player.isGoalkeeper && <ShieldHalf size={12} className="shrink-0 text-amber-400" />}
+          {player.position === 'gk' && <ShieldHalf size={12} className="shrink-0 text-amber-400" />}
           <span className="flex-1 truncate text-gray-100">{player.name}</span>
           <span className="rounded bg-gray-800 px-1 py-0.5 text-[10px] font-bold text-emerald-300 tabular-nums">
             {overallRating(player.stats)}

@@ -4,10 +4,13 @@ export interface PlayerStats {
   playmaking: number
 }
 
+export type Position = 'gk' | 'def' | 'mid' | 'fwd'
+
 export interface Player {
   id: string
   name: string
-  isGoalkeeper: boolean
+  position: Position
+  isSubstitute: boolean
   stats: PlayerStats
 }
 

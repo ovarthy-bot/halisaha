@@ -1,4 +1,4 @@
-import type { Player, Rule, TeamSettings } from '../types'
+import type { Player, Position, Rule, TeamSettings } from '../types'
 import { isSupabaseConfigured, supabase } from './supabaseClient'
 
 const STATE_ID = 'default'
@@ -11,9 +11,30 @@ export interface SquadState {
   team2Settings: TeamSettings
 }
 
+// Rows saved before the "position"/"isSubstitute" fields existed only had
+// `isGoalkeeper`. Normalize on read so old saved data keeps working.
+interface LegacyPlayerShape {
+  id: string
+  name: string
+  position?: Position
+  isGoalkeeper?: boolean
+  isSubstitute?: boolean
+  stats?: Player['stats']
+}
+
+function normalizePlayer(raw: LegacyPlayerShape): Player {
+  return {
+    id: raw.id,
+    name: raw.name,
+    position: raw.position ?? (raw.isGoalkeeper ? 'gk' : 'mid'),
+    isSubstitute: raw.isSubstitute ?? false,
+    stats: raw.stats ?? { attack: 3, defense: 3, playmaking: 3 },
+  }
+}
+
 interface AppStateRow {
   id: string
-  players: Player[]
+  players: LegacyPlayerShape[]
   rules: Rule[]
   team_size: number
   team1: TeamSettings
@@ -36,7 +57,7 @@ export async function loadSquadState(): Promise<LoadResult> {
   return {
     ok: true,
     state: {
-      players: data.players ?? [],
+      players: (data.players ?? []).map(normalizePlayer),
       rules: data.rules ?? [],
       teamSize: data.team_size ?? 6,
       team1Settings: data.team1 ?? { name: 'Takım 1', color: '#22c55e' },

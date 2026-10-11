@@ -20,6 +20,7 @@ const NAMES = [
 export const defaultPlayers: Player[] = NAMES.map((name, index) => ({
   id: `seed-${index}`,
   name,
-  isGoalkeeper: false,
+  position: 'mid',
+  isSubstitute: false,
   stats: { attack: 3, defense: 3, playmaking: 3 },
 }))

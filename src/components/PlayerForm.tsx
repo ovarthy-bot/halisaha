@@ -1,6 +1,7 @@
-import { Plus, Shield, Swords, Wand2 } from 'lucide-react'
+import { Plus, Shield, ShieldHalf, Swords, Wand2 } from 'lucide-react'
 import { useId, useState, type FormEvent, type ReactNode } from 'react'
-import type { Player, PlayerStats } from '../types'
+import { POSITION_LABELS, POSITION_OPTIONS } from '../constants'
+import type { Player, PlayerStats, Position } from '../types'
 
 interface PlayerFormProps {
   onAdd: (player: Omit<Player, 'id'>) => void
@@ -8,26 +9,31 @@ interface PlayerFormProps {
 
 const DEFAULT_STATS: PlayerStats = { attack: 3, defense: 3, playmaking: 3 }
 
+const POSITION_ICONS: Record<Position, ReactNode> = {
+  gk: <ShieldHalf size={13} />,
+  def: <Shield size={13} />,
+  mid: <Wand2 size={13} />,
+  fwd: <Swords size={13} />,
+}
+
 function StatSlider({
   label,
   icon,
   value,
-  onChange,
 }: {
   label: string
   icon: ReactNode
   value: number
-  onChange: (value: number) => void
 }) {
   const id = useId()
   return (
     <div>
       <div className="mb-1 flex items-center justify-between">
-        <label htmlFor={id} className="flex items-center gap-1.5 text-xs font-medium text-gray-400">
+        <label htmlFor={id} className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
           {icon}
           {label}
         </label>
-        <span className="rounded-md bg-gray-800 px-1.5 py-0.5 text-xs font-bold text-cyan-300 tabular-nums">
+        <span className="rounded-md bg-gray-800 px-1.5 py-0.5 text-xs font-bold text-gray-500 tabular-nums">
           {value}
         </span>
       </div>
@@ -38,8 +44,9 @@ function StatSlider({
         max={5}
         step={1}
         value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full"
+        disabled
+        readOnly
+        className="w-full cursor-not-allowed opacity-40"
       />
     </div>
   )
@@ -47,18 +54,16 @@ function StatSlider({
 
 export function PlayerForm({ onAdd }: PlayerFormProps) {
   const [name, setName] = useState('')
-  const [isGoalkeeper, setIsGoalkeeper] = useState(false)
-  const [stats, setStats] = useState<PlayerStats>(DEFAULT_STATS)
+  const [position, setPosition] = useState<Position>('mid')
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     const trimmed = name.trim()
     if (!trimmed) return
 
-    onAdd({ name: trimmed, isGoalkeeper, stats })
+    onAdd({ name: trimmed, position, isSubstitute: false, stats: DEFAULT_STATS })
     setName('')
-    setIsGoalkeeper(false)
-    setStats(DEFAULT_STATS)
+    setPosition('mid')
   }
 
   return (
@@ -79,35 +84,32 @@ export function PlayerForm({ onAdd }: PlayerFormProps) {
         className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:border-cyan-400/60 focus:outline-none"
       />
 
-      <label className="flex items-center gap-2 text-sm text-gray-300">
-        <input
-          type="checkbox"
-          checked={isGoalkeeper}
-          onChange={(e) => setIsGoalkeeper(e.target.checked)}
-          className="h-4 w-4 rounded border-white/20 bg-black/40 accent-cyan-400"
-        />
-        Kaleci
-      </label>
+      <div>
+        <span className="mb-1 block text-xs font-medium text-gray-400">Ana Mevki</span>
+        <div className="grid grid-cols-2 gap-1.5">
+          {POSITION_OPTIONS.map((pos) => (
+            <button
+              key={pos}
+              type="button"
+              onClick={() => setPosition(pos)}
+              className={`flex items-center justify-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition ${
+                position === pos
+                  ? 'border-cyan-400/60 bg-cyan-400/10 text-cyan-300'
+                  : 'border-white/10 text-gray-400 hover:border-white/20'
+              }`}
+            >
+              {POSITION_ICONS[pos]}
+              {POSITION_LABELS[pos]}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="space-y-3 pt-1">
-        <StatSlider
-          label="Atak"
-          icon={<Swords size={12} />}
-          value={stats.attack}
-          onChange={(v) => setStats((s) => ({ ...s, attack: v }))}
-        />
-        <StatSlider
-          label="Defans"
-          icon={<Shield size={12} />}
-          value={stats.defense}
-          onChange={(v) => setStats((s) => ({ ...s, defense: v }))}
-        />
-        <StatSlider
-          label="Oyun Kurma"
-          icon={<Wand2 size={12} />}
-          value={stats.playmaking}
-          onChange={(v) => setStats((s) => ({ ...s, playmaking: v }))}
-        />
+        <StatSlider label="Atak" icon={<Swords size={12} />} value={DEFAULT_STATS.attack} />
+        <StatSlider label="Defans" icon={<Shield size={12} />} value={DEFAULT_STATS.defense} />
+        <StatSlider label="Oyun Kurma" icon={<Wand2 size={12} />} value={DEFAULT_STATS.playmaking} />
+        <p className="text-[11px] text-gray-600">Beceri puanları şu an pasif — yakında aktif edilecek.</p>
       </div>
 
       <button

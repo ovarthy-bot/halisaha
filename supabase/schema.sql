@@ -32,20 +32,20 @@ insert into app_state (id, players, team_size)
 values (
   'default',
   '[
-    {"id":"seed-0","name":"Emin A.","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
-    {"id":"seed-1","name":"Burak","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
-    {"id":"seed-2","name":"İlhan","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
-    {"id":"seed-3","name":"Samet","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
-    {"id":"seed-4","name":"İsa","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
-    {"id":"seed-5","name":"Onur","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
-    {"id":"seed-6","name":"Fatih","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
-    {"id":"seed-7","name":"Serdar","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
-    {"id":"seed-8","name":"Emin D.","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
-    {"id":"seed-9","name":"Davut","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
-    {"id":"seed-10","name":"Alperen","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
-    {"id":"seed-11","name":"Ahmet","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
-    {"id":"seed-12","name":"Apo","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
-    {"id":"seed-13","name":"Koray","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}}
+    {"id":"seed-0","name":"Emin A.","position":"mid","isSubstitute":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-1","name":"Burak","position":"mid","isSubstitute":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-2","name":"İlhan","position":"mid","isSubstitute":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-3","name":"Samet","position":"mid","isSubstitute":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-4","name":"İsa","position":"mid","isSubstitute":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-5","name":"Onur","position":"mid","isSubstitute":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-6","name":"Fatih","position":"mid","isSubstitute":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-7","name":"Serdar","position":"mid","isSubstitute":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-8","name":"Emin D.","position":"mid","isSubstitute":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-9","name":"Davut","position":"mid","isSubstitute":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-10","name":"Alperen","position":"mid","isSubstitute":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-11","name":"Ahmet","position":"mid","isSubstitute":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-12","name":"Apo","position":"mid","isSubstitute":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-13","name":"Koray","position":"mid","isSubstitute":false,"stats":{"attack":3,"defense":3,"playmaking":3}}
   ]'::jsonb,
   7
 )

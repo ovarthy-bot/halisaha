@@ -186,7 +186,7 @@ export function generateBalancedTeams(players: Player[], teamSize: number, rules
     }
   }
 
-  const keepersAll = players.filter((p) => p.isGoalkeeper)
+  const keepersAll = players.filter((p) => p.position === 'gk')
   if (keepersAll.length < 2) {
     return {
       ok: false,
@@ -293,49 +293,18 @@ export function generateBalancedTeams(players: Player[], teamSize: number, rules
   return { ok: true, result: { team1, team2, team1Rating, team2Rating, difference } }
 }
 
-export interface Formation {
-  defenders: number
-  midfielders: number
-  attackers: number
-}
-
-export function getFormation(outfieldCount: number): Formation {
-  if (outfieldCount <= 0) return { defenders: 0, midfielders: 0, attackers: 0 }
-  if (outfieldCount === 1) return { defenders: 0, midfielders: 0, attackers: 1 }
-  if (outfieldCount === 2) return { defenders: 1, midfielders: 0, attackers: 1 }
-  if (outfieldCount === 3) return { defenders: 1, midfielders: 1, attackers: 1 }
-
-  let defenders = Math.max(2, Math.round(outfieldCount * 0.4))
-  let attackers = Math.max(1, Math.round(outfieldCount * 0.2))
-  let midfielders = outfieldCount - defenders - attackers
-
-  if (midfielders < 1) {
-    midfielders = 1
-    defenders = Math.max(1, Math.floor((outfieldCount - midfielders) / 2))
-    attackers = outfieldCount - midfielders - defenders
-  }
-
-  return { defenders, midfielders, attackers }
-}
-
 export interface PositionedPlayer {
   player: Player
   role: 'gk' | 'def' | 'mid' | 'att'
 }
 
 export function assignPositions(team: Player[]): PositionedPlayer[] {
-  const gk = team.find((p) => p.isGoalkeeper) ?? team[0]
+  const gk = team.find((p) => p.position === 'gk') ?? team[0]
   const outfield = team.filter((p) => p.id !== gk.id)
-  const formation = getFormation(outfield.length)
 
-  const remaining = [...outfield]
-  const byDefense = [...remaining].sort((a, b) => b.stats.defense - a.stats.defense)
-  const defenders = byDefense.slice(0, formation.defenders)
-  const afterDef = remaining.filter((p) => !defenders.includes(p))
-
-  const byPlaymaking = [...afterDef].sort((a, b) => b.stats.playmaking - a.stats.playmaking)
-  const midfielders = byPlaymaking.slice(0, formation.midfielders)
-  const attackers = afterDef.filter((p) => !midfielders.includes(p))
+  const defenders = outfield.filter((p) => p.position === 'def')
+  const midfielders = outfield.filter((p) => p.position === 'mid')
+  const attackers = outfield.filter((p) => p.position === 'fwd')
 
   return [
     { player: gk, role: 'gk' as const },

@@ -61,7 +61,7 @@ export function Pitch({ team1, team2, team1Settings, team2Settings }: PitchProps
   const team2Positions = team2.length > 0 ? layoutTeam(team2, 'right') : []
 
   return (
-    <div className="relative mx-auto aspect-[2/3] w-full max-w-xl overflow-hidden rounded-2xl border-4 border-emerald-950 shadow-2xl sm:aspect-[16/10] sm:max-w-none">
+    <div className="relative mx-auto aspect-[2/3] h-full w-auto max-w-full overflow-hidden rounded-2xl border-4 border-emerald-950 shadow-2xl sm:h-auto sm:w-full sm:aspect-[16/10] sm:max-w-none">
       <PitchLines />
 
       {!hasPlayers && (
