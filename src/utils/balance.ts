@@ -175,14 +175,14 @@ export function generateBalancedTeams(players: Player[], teamSize: number, rules
   const required = teamSize * 2
 
   if (players.length === 0) {
-    return { ok: false, error: 'Add some players before generating teams.' }
+    return { ok: false, error: 'Takımları oluşturmadan önce oyuncu ekleyin.' }
   }
 
   if (players.length !== required) {
-    const word = players.length > required ? 'too many' : 'not enough'
+    const word = players.length > required ? 'fazla' : 'eksik'
     return {
       ok: false,
-      error: `You have ${word} players for ${teamSize}v${teamSize}: need exactly ${required}, currently have ${players.length}.`,
+      error: `${teamSize}v${teamSize} için oyuncu sayınız ${word}: tam olarak ${required} kişi gerekiyor, şu an ${players.length} kişi var.`,
     }
   }
 
@@ -190,7 +190,7 @@ export function generateBalancedTeams(players: Player[], teamSize: number, rules
   if (keepersAll.length < 2) {
     return {
       ok: false,
-      error: `Not enough goalkeepers. Mark at least 2 players as Goalkeeper (1 per team) — currently ${keepersAll.length}.`,
+      error: `Yeterli kaleci yok. En az 2 oyuncuyu kaleci olarak işaretleyin (takım başına 1) — şu an ${keepersAll.length} kaleci var.`,
     }
   }
 
@@ -209,7 +209,7 @@ export function generateBalancedTeams(players: Player[], teamSize: number, rules
       const p2 = players.find((p) => p.id === r.player2Id)
       return {
         ok: false,
-        error: `Rule conflict: ${p1?.name ?? '?'} and ${p2?.name ?? '?'} are marked both "together" and "apart".`,
+        error: `Kural çakışması: ${p1?.name ?? '?'} ve ${p2?.name ?? '?'} hem "aynı kadroda" hem "farklı kadroda" olarak işaretlenmiş.`,
       }
     }
   }
@@ -229,7 +229,7 @@ export function generateBalancedTeams(players: Player[], teamSize: number, rules
     return {
       ok: false,
       error:
-        'Goalkeepers can\'t be split across two teams — check your "together" rules. Each team needs its own goalkeeper.',
+        'Kaleciler iki takıma ayrılamıyor — "aynı kadroda" kurallarınızı kontrol edin. Her takımın kendi kalecisi olmalı.',
     }
   }
 
@@ -250,7 +250,7 @@ export function generateBalancedTeams(players: Player[], teamSize: number, rules
   if (conflict) {
     return {
       ok: false,
-      error: 'Your "apart" rules contradict each other — no split can satisfy all of them at once.',
+      error: '"Farklı kadroda" kurallarınız birbiriyle çelişiyor — hiçbir ayrım hepsini aynı anda sağlayamaz.',
     }
   }
 
@@ -277,7 +277,7 @@ export function generateBalancedTeams(players: Player[], teamSize: number, rules
   if (!solved) {
     return {
       ok: false,
-      error: `Could not form two ${teamSize}v${teamSize} teams that satisfy all the rules — try removing a rule.`,
+      error: `Tüm kuralları sağlayan iki ${teamSize}v${teamSize} takımı oluşturulamadı — bir kuralı kaldırmayı deneyin.`,
     }
   }
 

@@ -16,7 +16,7 @@ export function RulesPanel({ players, rules, onAdd, onDelete }: RulesPanelProps)
   const selectId1 = useId()
   const selectId2 = useId()
 
-  const nameOf = (id: string) => players.find((p) => p.id === id)?.name ?? 'Unknown'
+  const nameOf = (id: string) => players.find((p) => p.id === id)?.name ?? 'Bilinmiyor'
 
   const canAdd =
     player1Id &&
@@ -40,11 +40,11 @@ export function RulesPanel({ players, rules, onAdd, onDelete }: RulesPanelProps)
     <div className="space-y-3 rounded-2xl border border-white/10 bg-gray-900/50 p-4 backdrop-blur-xl">
       <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
         <Link2 size={16} className="text-violet-400" />
-        Rules
+        Kurallar
       </h2>
 
       {players.length < 2 ? (
-        <p className="text-xs text-gray-500">Add at least 2 players to create a rule.</p>
+        <p className="text-xs text-gray-500">Kural oluşturmak için en az 2 oyuncu ekleyin.</p>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2">
@@ -55,7 +55,7 @@ export function RulesPanel({ players, rules, onAdd, onDelete }: RulesPanelProps)
               className="w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-xs text-white focus:border-cyan-400/60 focus:outline-none"
             >
               <option value="" className="bg-gray-900">
-                Player A
+                Oyuncu A
               </option>
               {players.map((p) => (
                 <option key={p.id} value={p.id} disabled={p.id === player2Id} className="bg-gray-900">
@@ -70,7 +70,7 @@ export function RulesPanel({ players, rules, onAdd, onDelete }: RulesPanelProps)
               className="w-full rounded-lg border border-white/10 bg-black/40 px-2 py-2 text-xs text-white focus:border-cyan-400/60 focus:outline-none"
             >
               <option value="" className="bg-gray-900">
-                Player B
+                Oyuncu B
               </option>
               {players.map((p) => (
                 <option key={p.id} value={p.id} disabled={p.id === player1Id} className="bg-gray-900">
@@ -91,7 +91,7 @@ export function RulesPanel({ players, rules, onAdd, onDelete }: RulesPanelProps)
               }`}
             >
               <Users2 size={13} />
-              Must be together
+              Aynı kadroda olmalı
             </button>
             <button
               type="button"
@@ -103,7 +103,7 @@ export function RulesPanel({ players, rules, onAdd, onDelete }: RulesPanelProps)
               }`}
             >
               <Shuffle size={13} />
-              Must be apart
+              Farklı kadroda olmalı
             </button>
           </div>
 
@@ -113,7 +113,7 @@ export function RulesPanel({ players, rules, onAdd, onDelete }: RulesPanelProps)
             disabled={!canAdd}
             className="w-full rounded-lg bg-violet-500/90 py-2 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Add Rule
+            Kural Ekle
           </button>
         </>
       )}
@@ -137,7 +137,7 @@ export function RulesPanel({ players, rules, onAdd, onDelete }: RulesPanelProps)
               <button
                 onClick={() => onDelete(rule.id)}
                 className="shrink-0 rounded-md p-1 text-gray-500 transition hover:bg-red-500/10 hover:text-red-400"
-                aria-label="Delete rule"
+                aria-label="Kuralı sil"
               >
                 <Trash2 size={13} />
               </button>

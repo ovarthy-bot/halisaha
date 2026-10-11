@@ -50,7 +50,7 @@ function TeamLabel({ side, settings }: { side: 'left' | 'right'; settings: TeamS
       className="pitch-jersey absolute -translate-x-1/2 rounded-full border px-3 py-1 text-xs font-bold tracking-wide uppercase shadow-lg backdrop-blur-sm"
       style={{ ...style, borderColor: settings.color, color: settings.color, backgroundColor: 'rgba(0,0,0,0.55)' }}
     >
-      {settings.name || (side === 'left' ? 'Team 1' : 'Team 2')}
+      {settings.name || (side === 'left' ? 'Takım 1' : 'Takım 2')}
     </div>
   )
 }
@@ -67,7 +67,7 @@ export function Pitch({ team1, team2, team1Settings, team2Settings }: PitchProps
       {!hasPlayers && (
         <div className="absolute inset-0 flex items-center justify-center">
           <p className="rounded-xl bg-black/50 px-4 py-2 text-center text-sm text-gray-300 backdrop-blur-sm">
-            Add players and generate teams to see them on the pitch
+            Oyuncu ekleyip takımları oluşturunca sahada görünecekler
           </p>
         </div>
       )}

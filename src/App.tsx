@@ -8,6 +8,7 @@ import { SettingsPanel } from './components/SettingsPanel'
 import { TeamRosterEditor } from './components/TeamRosterEditor'
 import { Toast, type ToastMessage } from './components/Toast'
 import { TeamSummary } from './components/TeamSummary'
+import { defaultPlayers } from './data/defaultPlayers'
 import { isSupabaseConfigured, loadSquadState, saveSquadState } from './lib/squadState'
 import type { BalancedTeams, Player, Rule, TeamId, TeamSettings } from './types'
 import { generateBalancedTeams } from './utils/balance'
@@ -21,11 +22,11 @@ function createId() {
 }
 
 export default function App() {
-  const [players, setPlayers] = useState<Player[]>([])
+  const [players, setPlayers] = useState<Player[]>(defaultPlayers)
   const [rules, setRules] = useState<Rule[]>([])
-  const [teamSize, setTeamSize] = useState(6)
-  const [team1Settings, setTeam1Settings] = useState<TeamSettings>({ name: 'Team 1', color: '#22c55e' })
-  const [team2Settings, setTeam2Settings] = useState<TeamSettings>({ name: 'Team 2', color: '#3b82f6' })
+  const [teamSize, setTeamSize] = useState(7)
+  const [team1Settings, setTeam1Settings] = useState<TeamSettings>({ name: 'Takım 1', color: '#22c55e' })
+  const [team2Settings, setTeam2Settings] = useState<TeamSettings>({ name: 'Takım 2', color: '#3b82f6' })
   const [balanced, setBalanced] = useState<BalancedTeams | null>(null)
   const [toast, setToast] = useState<ToastMessage | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -37,7 +38,7 @@ export default function App() {
   useEffect(() => {
     if (!isSupabaseConfigured) return
 
-    loadSquadState().then((state) => {
+    loadSquadState().then(({ ok, state }) => {
       if (state) {
         setPlayers(state.players)
         setRules(state.rules)
@@ -46,7 +47,7 @@ export default function App() {
         setTeam2Settings(state.team2Settings)
       }
       hasLoadedRef.current = true
-      setSyncStatus('saved')
+      setSyncStatus(ok ? 'saved' : 'error')
     })
   }, [])
 
@@ -94,6 +95,14 @@ export default function App() {
     setBalanced(null)
   }
 
+  function handleToggleGoalkeeper(id: string) {
+    setPlayers((prev) => prev.map((p) => (p.id === id ? { ...p, isGoalkeeper: !p.isGoalkeeper } : p)))
+  }
+
+  function handleRenamePlayer(id: string, name: string) {
+    setPlayers((prev) => prev.map((p) => (p.id === id ? { ...p, name } : p)))
+  }
+
   function handleAddRule(rule: Omit<Rule, 'id'>) {
     setRules((prev) => [...prev, { ...rule, id: createId() }])
   }
@@ -110,10 +119,7 @@ export default function App() {
       return
     }
     setBalanced({ team1: outcome.result.team1, team2: outcome.result.team2 })
-    showToast(
-      `Teams generated! Rating difference: ${outcome.result.difference}.`,
-      'success',
-    )
+    showToast(`Takımlar oluşturuldu! Puan farkı: ${outcome.result.difference}.`, 'success')
     setSidebarOpen(false)
   }
 
@@ -145,14 +151,14 @@ export default function App() {
         <div className="mb-3 flex items-center justify-between lg:mb-4">
           <h1 className="flex items-center gap-2 text-lg font-bold">
             <Goal className="text-emerald-400" size={22} />
-            Squad Builder
+            Kadro Oluşturucu
           </h1>
           <div className="flex items-center gap-2">
             <SyncIndicator status={syncStatus} />
             <button
               onClick={() => setSidebarOpen(false)}
               className="rounded-full p-1.5 text-gray-400 hover:bg-white/10 lg:hidden"
-              aria-label="Close panel"
+              aria-label="Paneli kapat"
             >
               <X size={20} />
             </button>
@@ -170,7 +176,12 @@ export default function App() {
             onGenerate={handleGenerate}
           />
           <PlayerForm onAdd={handleAddPlayer} />
-          <PlayerList players={players} onDelete={handleDeletePlayer} />
+          <PlayerList
+            players={players}
+            onDelete={handleDeletePlayer}
+            onToggleGoalkeeper={handleToggleGoalkeeper}
+            onRename={handleRenamePlayer}
+          />
           <RulesPanel players={players} rules={rules} onAdd={handleAddRule} onDelete={handleDeleteRule} />
         </div>
       </aside>
@@ -180,7 +191,7 @@ export default function App() {
         <button
           className="fixed inset-0 z-30 bg-black/60 lg:hidden"
           onClick={() => setSidebarOpen(false)}
-          aria-label="Close panel overlay"
+          aria-label="Panel örtüsünü kapat"
         />
       )}
 
@@ -219,7 +230,7 @@ export default function App() {
           className="fixed bottom-5 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-3 text-sm font-bold text-black shadow-xl shadow-emerald-500/30 lg:hidden"
         >
           <Menu size={18} />
-          Manage Players ({players.length})
+          Oyuncuları Yönet ({players.length})
         </button>
       )}
     </div>
@@ -229,9 +240,12 @@ export default function App() {
 function SyncIndicator({ status }: { status: SyncStatus }) {
   if (status === 'offline') {
     return (
-      <span className="flex items-center gap-1 text-xs text-gray-500" title="Supabase not configured — changes stay local only">
+      <span
+        className="flex items-center gap-1 text-xs text-gray-500"
+        title="Supabase yapılandırılmadı — değişiklikler yalnızca bu cihazda kalır"
+      >
         <CloudOff size={13} />
-        Local only
+        Yalnızca yerel
       </span>
     )
   }
@@ -239,7 +253,7 @@ function SyncIndicator({ status }: { status: SyncStatus }) {
     return (
       <span className="flex items-center gap-1 text-xs text-gray-400">
         <Loader2 size={13} className="animate-spin" />
-        Loading...
+        Yükleniyor...
       </span>
     )
   }
@@ -247,22 +261,22 @@ function SyncIndicator({ status }: { status: SyncStatus }) {
     return (
       <span className="flex items-center gap-1 text-xs text-cyan-300">
         <Loader2 size={13} className="animate-spin" />
-        Saving...
+        Kaydediliyor...
       </span>
     )
   }
   if (status === 'error') {
     return (
-      <span className="flex items-center gap-1 text-xs text-red-400" title="Could not reach Supabase">
+      <span className="flex items-center gap-1 text-xs text-red-400" title="Supabase'e ulaşılamadı">
         <CloudOff size={13} />
-        Sync error
+        Kayıt hatası
       </span>
     )
   }
   return (
     <span className="flex items-center gap-1 text-xs text-emerald-400">
       <Cloud size={13} />
-      Saved
+      Kaydedildi
     </span>
   )
 }

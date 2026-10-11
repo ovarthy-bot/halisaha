@@ -20,19 +20,28 @@ interface AppStateRow {
   team2: TeamSettings
 }
 
-export async function loadSquadState(): Promise<SquadState | null> {
-  if (!supabase) return null
+export interface LoadResult {
+  ok: boolean
+  state: SquadState | null
+}
+
+export async function loadSquadState(): Promise<LoadResult> {
+  if (!supabase) return { ok: false, state: null }
 
   const { data, error } = await supabase.from('app_state').select('*').eq('id', STATE_ID).maybeSingle<AppStateRow>()
 
-  if (error || !data) return null
+  if (error) return { ok: false, state: null }
+  if (!data) return { ok: true, state: null }
 
   return {
-    players: data.players ?? [],
-    rules: data.rules ?? [],
-    teamSize: data.team_size ?? 6,
-    team1Settings: data.team1 ?? { name: 'Team 1', color: '#22c55e' },
-    team2Settings: data.team2 ?? { name: 'Team 2', color: '#3b82f6' },
+    ok: true,
+    state: {
+      players: data.players ?? [],
+      rules: data.rules ?? [],
+      teamSize: data.team_size ?? 6,
+      team1Settings: data.team1 ?? { name: 'Takım 1', color: '#22c55e' },
+      team2Settings: data.team2 ?? { name: 'Takım 2', color: '#3b82f6' },
+    },
   }
 }
 

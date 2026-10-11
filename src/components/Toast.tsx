@@ -41,7 +41,7 @@ export function Toast({ toast, onDismiss }: ToastProps) {
         <button
           onClick={onDismiss}
           className="ml-2 shrink-0 rounded-full p-0.5 text-current opacity-60 transition hover:opacity-100"
-          aria-label="Dismiss"
+          aria-label="Kapat"
         >
           <X size={16} />
         </button>

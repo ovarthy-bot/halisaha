@@ -34,14 +34,14 @@ function TeamKitEditor({
           value={settings.color}
           onChange={(e) => onChange({ ...settings, color: e.target.value })}
           className="h-6 w-8 cursor-pointer rounded border border-white/20 bg-transparent"
-          aria-label={`${label} custom color`}
+          aria-label={`${label} özel renk`}
         />
       </div>
       <input
         type="text"
         value={settings.name}
         onChange={(e) => onChange({ ...settings, name: e.target.value })}
-        placeholder="Team name"
+        placeholder="Takım adı"
         className="w-full rounded-md border border-white/10 bg-black/40 px-2 py-1.5 text-xs text-white placeholder:text-gray-500 focus:border-cyan-400/60 focus:outline-none"
       />
       <div className="flex flex-wrap gap-1.5">
@@ -74,11 +74,11 @@ export function SettingsPanel({
 }: SettingsPanelProps) {
   return (
     <div className="space-y-3 rounded-2xl border border-white/10 bg-gray-900/50 p-4 backdrop-blur-xl">
-      <h2 className="text-sm font-semibold text-white">Match Settings</h2>
+      <h2 className="text-sm font-semibold text-white">Maç Ayarları</h2>
 
       <div>
         <label htmlFor="team-size" className="mb-1 block text-xs font-medium text-gray-400">
-          Team Size
+          Takım Boyutu
         </label>
         <select
           id="team-size"
@@ -88,15 +88,15 @@ export function SettingsPanel({
         >
           {TEAM_SIZE_OPTIONS.map((size) => (
             <option key={size} value={size} className="bg-gray-900">
-              {size}v{size} ({size * 2} players)
+              {size}v{size} ({size * 2} oyuncu)
             </option>
           ))}
         </select>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <TeamKitEditor label="Team 1" settings={team1} onChange={onTeam1Change} accent={team1.color} />
-        <TeamKitEditor label="Team 2" settings={team2} onChange={onTeam2Change} accent={team2.color} />
+        <TeamKitEditor label="Takım 1" settings={team1} onChange={onTeam1Change} accent={team1.color} />
+        <TeamKitEditor label="Takım 2" settings={team2} onChange={onTeam2Change} accent={team2.color} />
       </div>
 
       <button
@@ -104,7 +104,7 @@ export function SettingsPanel({
         className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-400 py-2.5 text-sm font-bold text-black shadow-lg shadow-cyan-500/30 transition hover:brightness-110"
       >
         <Sparkles size={16} />
-        Generate Balanced Teams
+        Dengeli Takımlar Oluştur
       </button>
     </div>
   )

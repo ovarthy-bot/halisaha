@@ -6,8 +6,8 @@ create table if not exists app_state (
   players jsonb not null default '[]',
   rules jsonb not null default '[]',
   team_size integer not null default 6,
-  team1 jsonb not null default '{"name":"Team 1","color":"#22c55e"}',
-  team2 jsonb not null default '{"name":"Team 2","color":"#3b82f6"}',
+  team1 jsonb not null default '{"name":"Takım 1","color":"#22c55e"}',
+  team2 jsonb not null default '{"name":"Takım 2","color":"#3b82f6"}',
   updated_at timestamptz not null default now()
 );
 
@@ -28,5 +28,25 @@ create policy "anon can upsert app_state" on app_state
 create policy "anon can update app_state" on app_state
   for update using (true);
 
-insert into app_state (id) values ('default')
+insert into app_state (id, players, team_size)
+values (
+  'default',
+  '[
+    {"id":"seed-0","name":"Emin A.","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-1","name":"Burak","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-2","name":"İlhan","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-3","name":"Samet","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-4","name":"İsa","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-5","name":"Onur","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-6","name":"Fatih","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-7","name":"Serdar","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-8","name":"Emin D.","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-9","name":"Davut","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-10","name":"Alperen","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-11","name":"Ahmet","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-12","name":"Apo","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}},
+    {"id":"seed-13","name":"Koray","isGoalkeeper":false,"stats":{"attack":3,"defense":3,"playmaking":3}}
+  ]'::jsonb,
+  7
+)
 on conflict (id) do nothing;

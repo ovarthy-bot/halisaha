@@ -26,7 +26,7 @@ function Column({
   return (
     <div className="flex-1 space-y-1.5">
       <h3 className="truncate text-xs font-bold tracking-wide uppercase" style={{ color: settings.color }}>
-        {settings.name || (side === 'team1' ? 'Team 1' : 'Team 2')}
+        {settings.name || (side === 'team1' ? 'Takım 1' : 'Takım 2')}
       </h3>
       {team.map((player) => (
         <div
@@ -37,7 +37,7 @@ function Column({
             <button
               onClick={() => onMovePlayer(player.id, side)}
               className="shrink-0 rounded-md p-1 text-gray-500 transition hover:bg-white/10 hover:text-white"
-              aria-label={`Move ${player.name} to the other team`}
+              aria-label={`${player.name} adlı oyuncuyu diğer takıma taşı`}
             >
               <ArrowLeftRight size={12} />
             </button>
@@ -51,7 +51,7 @@ function Column({
             <button
               onClick={() => onMovePlayer(player.id, side)}
               className="shrink-0 rounded-md p-1 text-gray-500 transition hover:bg-white/10 hover:text-white"
-              aria-label={`Move ${player.name} to the other team`}
+              aria-label={`${player.name} adlı oyuncuyu diğer takıma taşı`}
             >
               <ArrowLeftRight size={12} />
             </button>

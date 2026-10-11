@@ -68,14 +68,14 @@ export function PlayerForm({ onAdd }: PlayerFormProps) {
     >
       <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
         <Plus size={16} className="text-emerald-400" />
-        Add Player
+        Oyuncu Ekle
       </h2>
 
       <input
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Player name"
+        placeholder="Oyuncu adı"
         className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:border-cyan-400/60 focus:outline-none"
       />
 
@@ -86,24 +86,24 @@ export function PlayerForm({ onAdd }: PlayerFormProps) {
           onChange={(e) => setIsGoalkeeper(e.target.checked)}
           className="h-4 w-4 rounded border-white/20 bg-black/40 accent-cyan-400"
         />
-        Goalkeeper
+        Kaleci
       </label>
 
       <div className="space-y-3 pt-1">
         <StatSlider
-          label="Attack"
+          label="Atak"
           icon={<Swords size={12} />}
           value={stats.attack}
           onChange={(v) => setStats((s) => ({ ...s, attack: v }))}
         />
         <StatSlider
-          label="Defense"
+          label="Defans"
           icon={<Shield size={12} />}
           value={stats.defense}
           onChange={(v) => setStats((s) => ({ ...s, defense: v }))}
         />
         <StatSlider
-          label="Playmaking"
+          label="Oyun Kurma"
           icon={<Wand2 size={12} />}
           value={stats.playmaking}
           onChange={(v) => setStats((s) => ({ ...s, playmaking: v }))}
@@ -115,7 +115,7 @@ export function PlayerForm({ onAdd }: PlayerFormProps) {
         disabled={!name.trim()}
         className="w-full rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 py-2 text-sm font-semibold text-black shadow-lg shadow-emerald-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        Add to Pool
+        Kadroya Ekle
       </button>
     </form>
   )
