@@ -1,0 +1,90 @@
+import type { CSSProperties } from 'react'
+import type { Player, TeamSettings } from '../types'
+import { assignPositions, type PositionedPlayer } from '../utils/balance'
+import { PitchLines } from './PitchLines'
+import { PlayerJersey } from './PlayerJersey'
+
+interface PitchProps {
+  team1: Player[]
+  team2: Player[]
+  team1Settings: TeamSettings
+  team2Settings: TeamSettings
+}
+
+const ROLE_DEPTH: Record<PositionedPlayer['role'], number> = { gk: 0.14, def: 0.36, mid: 0.58, att: 0.82 }
+const ROLE_ORDER: PositionedPlayer['role'][] = ['gk', 'def', 'mid', 'att']
+
+function laneFor(index: number, count: number): number {
+  if (count <= 1) return 50
+  return 12 + (index / (count - 1)) * 76
+}
+
+interface LaidOutPlayer {
+  player: Player
+  main: number
+  cross: number
+}
+
+function layoutTeam(team: Player[], side: 'left' | 'right'): LaidOutPlayer[] {
+  const positioned = assignPositions(team)
+  const groups: Record<PositionedPlayer['role'], PositionedPlayer[]> = { gk: [], def: [], mid: [], att: [] }
+  for (const entry of positioned) groups[entry.role].push(entry)
+
+  return ROLE_ORDER.flatMap((role) => {
+    const depth = ROLE_DEPTH[role]
+    const main = side === 'left' ? depth * 50 : 100 - depth * 50
+    return groups[role].map((entry, idx) => ({
+      player: entry.player,
+      main,
+      cross: laneFor(idx, groups[role].length),
+    }))
+  })
+}
+
+function TeamLabel({ side, settings }: { side: 'left' | 'right'; settings: TeamSettings }) {
+  const main = side === 'left' ? 25 : 75
+  const style = { '--main': `${main}%`, '--cross': '18%' } as CSSProperties
+
+  return (
+    <div
+      className="pitch-jersey absolute -translate-x-1/2 rounded-full border px-3 py-1 text-xs font-bold tracking-wide uppercase shadow-lg backdrop-blur-sm"
+      style={{ ...style, borderColor: settings.color, color: settings.color, backgroundColor: 'rgba(0,0,0,0.55)' }}
+    >
+      {settings.name || (side === 'left' ? 'Team 1' : 'Team 2')}
+    </div>
+  )
+}
+
+export function Pitch({ team1, team2, team1Settings, team2Settings }: PitchProps) {
+  const hasPlayers = team1.length > 0 || team2.length > 0
+  const team1Positions = team1.length > 0 ? layoutTeam(team1, 'left') : []
+  const team2Positions = team2.length > 0 ? layoutTeam(team2, 'right') : []
+
+  return (
+    <div className="relative mx-auto aspect-[2/3] w-full max-w-xl overflow-hidden rounded-2xl border-4 border-emerald-950 shadow-2xl sm:aspect-[16/10] sm:max-w-none">
+      <PitchLines />
+
+      {!hasPlayers && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <p className="rounded-xl bg-black/50 px-4 py-2 text-center text-sm text-gray-300 backdrop-blur-sm">
+            Add players and generate teams to see them on the pitch
+          </p>
+        </div>
+      )}
+
+      {hasPlayers && (
+        <>
+          <TeamLabel side="left" settings={team1Settings} />
+          <TeamLabel side="right" settings={team2Settings} />
+        </>
+      )}
+
+      {team1Positions.map(({ player, main, cross }) => (
+        <PlayerJersey key={player.id} player={player} color={team1Settings.color} main={main} cross={cross} />
+      ))}
+      {team2Positions.map(({ player, main, cross }) => (
+        <PlayerJersey key={player.id} player={player} color={team2Settings.color} main={main} cross={cross} />
+      ))}
+    </div>
+  )
+}
