@@ -66,12 +66,10 @@ export function TeamRosterEditor({ team1, team2, team1Settings, team2Settings, o
   if (team1.length === 0 && team2.length === 0) return null
 
   return (
-    <div className="mx-auto mb-3 w-full max-w-xl rounded-xl border border-white/10 bg-gray-900/50 p-3 backdrop-blur-xl sm:max-w-none">
-      <div className="flex gap-3">
-        <Column team={team1} settings={team1Settings} side="team1" arrowDirection="right" onMovePlayer={onMovePlayer} />
-        <div className="w-px shrink-0 bg-white/10" />
-        <Column team={team2} settings={team2Settings} side="team2" arrowDirection="left" onMovePlayer={onMovePlayer} />
-      </div>
+    <div className="flex gap-3">
+      <Column team={team1} settings={team1Settings} side="team1" arrowDirection="right" onMovePlayer={onMovePlayer} />
+      <div className="w-px shrink-0 bg-white/10" />
+      <Column team={team2} settings={team2Settings} side="team2" arrowDirection="left" onMovePlayer={onMovePlayer} />
     </div>
   )
 }

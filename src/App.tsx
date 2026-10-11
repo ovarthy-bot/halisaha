@@ -1,4 +1,4 @@
-import { ArrowLeft, Cloud, CloudOff, Goal, Loader2, Menu, Settings, X } from 'lucide-react'
+import { ArrowLeft, Cloud, CloudOff, Goal, Loader2, Menu, Settings, Users, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pitch } from './components/Pitch'
 import { PlayerList } from './components/PlayerList'
@@ -30,6 +30,7 @@ export default function App() {
   const [toast, setToast] = useState<ToastMessage | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [rosterOpen, setRosterOpen] = useState(false)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(isSupabaseConfigured ? 'loading' : 'offline')
 
   const hasLoadedRef = useRef(!isSupabaseConfigured)
@@ -238,9 +239,32 @@ export default function App() {
             team2Settings={team2Settings}
           />
         </div>
+      </main>
 
-        {balanced && (
-          <div className="mt-3 w-full shrink-0 overflow-y-auto" style={{ maxHeight: '32vh' }}>
+      {/* Roster drawer — slides in beside the pitch on mobile, and on lg+ genuinely narrows
+          the pitch area (a static column) instead of overlaying it, so it's truly side-by-side. */}
+      {balanced && (
+        <aside
+          className={`fixed inset-y-0 right-0 z-40 overflow-hidden border-l border-white/10 bg-gray-950/95 backdrop-blur-xl transition-all duration-300 lg:static lg:z-auto lg:bg-gray-950/60 ${
+            rosterOpen
+              ? 'w-full max-w-xs translate-x-0 sm:max-w-sm lg:w-[320px] lg:shrink-0'
+              : 'w-full max-w-xs translate-x-full sm:max-w-sm lg:w-0 lg:translate-x-0 lg:border-l-0'
+          }`}
+        >
+          <div className="h-full w-full max-w-xs overflow-y-auto p-4 sm:max-w-sm lg:w-[320px]">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
+                <Users size={16} className="text-cyan-400" />
+                Kadrolar
+              </h2>
+              <button
+                onClick={() => setRosterOpen(false)}
+                className="rounded-full p-1.5 text-gray-400 transition hover:bg-white/10 hover:text-white"
+                aria-label="Kadro listesini kapat"
+              >
+                <X size={18} />
+              </button>
+            </div>
             <TeamRosterEditor
               team1={balanced.team1}
               team2={balanced.team2}
@@ -249,8 +273,28 @@ export default function App() {
               onMovePlayer={handleMovePlayer}
             />
           </div>
-        )}
-      </main>
+        </aside>
+      )}
+
+      {/* Roster drawer backdrop — mobile only; desktop shows it side-by-side with the pitch */}
+      {balanced && rosterOpen && (
+        <button
+          className="fixed inset-0 z-30 bg-black/60 lg:hidden"
+          onClick={() => setRosterOpen(false)}
+          aria-label="Kadro listesi örtüsünü kapat"
+        />
+      )}
+
+      {/* Roster drawer toggle — hidden once the drawer is open; its own header has the close button */}
+      {balanced && !rosterOpen && (
+        <button
+          onClick={() => setRosterOpen(true)}
+          className="fixed top-4 right-4 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 px-4 py-2.5 text-sm font-bold text-black shadow-xl shadow-cyan-500/30"
+          aria-label="Kadro listesini aç"
+        >
+          <Users size={18} />
+        </button>
+      )}
 
       {/* Mobile toggle button */}
       {!sidebarOpen && (
