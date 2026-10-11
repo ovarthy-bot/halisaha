@@ -1,6 +1,6 @@
 import { Armchair, Trash2, Users } from 'lucide-react'
 import { useState, type KeyboardEvent } from 'react'
-import { POSITION_OPTIONS, POSITION_SHORT_LABELS } from '../constants'
+import { POSITION_COLORS, POSITION_HEX, POSITION_OPTIONS, POSITION_SHORT_LABELS } from '../constants'
 import type { Player, Position } from '../types'
 import { overallRating } from '../types'
 
@@ -61,11 +61,11 @@ export function PlayerList({ players, onDelete, onSetPosition, onToggleSubstitut
         <select
           value={player.position}
           onChange={(e) => onSetPosition(player.id, e.target.value as Position)}
-          className="shrink-0 rounded-md border border-white/10 bg-black/40 px-1 py-1 text-[11px] font-semibold text-gray-300 focus:border-cyan-400/60 focus:outline-none"
+          className={`shrink-0 rounded-md border border-white/10 bg-black/40 px-1 py-1 text-[11px] font-bold focus:border-cyan-400/60 focus:outline-none ${POSITION_COLORS[player.position]}`}
           aria-label={`${player.name} için ana mevki`}
         >
           {POSITION_OPTIONS.map((pos) => (
-            <option key={pos} value={pos} className="bg-gray-900">
+            <option key={pos} value={pos} className="bg-gray-900" style={{ color: POSITION_HEX[pos] }}>
               {POSITION_SHORT_LABELS[pos]}
             </option>
           ))}

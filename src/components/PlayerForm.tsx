@@ -1,5 +1,5 @@
 import { Plus, Shield, ShieldHalf, Swords, Wand2 } from 'lucide-react'
-import { useId, useState, type FormEvent, type ReactNode } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { POSITION_LABELS, POSITION_OPTIONS } from '../constants'
 import type { Player, PlayerStats, Position } from '../types'
 
@@ -14,42 +14,6 @@ const POSITION_ICONS: Record<Position, ReactNode> = {
   def: <Shield size={13} />,
   mid: <Wand2 size={13} />,
   fwd: <Swords size={13} />,
-}
-
-function StatSlider({
-  label,
-  icon,
-  value,
-}: {
-  label: string
-  icon: ReactNode
-  value: number
-}) {
-  const id = useId()
-  return (
-    <div>
-      <div className="mb-1 flex items-center justify-between">
-        <label htmlFor={id} className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
-          {icon}
-          {label}
-        </label>
-        <span className="rounded-md bg-gray-800 px-1.5 py-0.5 text-xs font-bold text-gray-500 tabular-nums">
-          {value}
-        </span>
-      </div>
-      <input
-        id={id}
-        type="range"
-        min={1}
-        max={5}
-        step={1}
-        value={value}
-        disabled
-        readOnly
-        className="w-full cursor-not-allowed opacity-40"
-      />
-    </div>
-  )
 }
 
 export function PlayerForm({ onAdd }: PlayerFormProps) {
@@ -103,13 +67,6 @@ export function PlayerForm({ onAdd }: PlayerFormProps) {
             </button>
           ))}
         </div>
-      </div>
-
-      <div className="space-y-3 pt-1">
-        <StatSlider label="Atak" icon={<Swords size={12} />} value={DEFAULT_STATS.attack} />
-        <StatSlider label="Defans" icon={<Shield size={12} />} value={DEFAULT_STATS.defense} />
-        <StatSlider label="Oyun Kurma" icon={<Wand2 size={12} />} value={DEFAULT_STATS.playmaking} />
-        <p className="text-[11px] text-gray-600">Beceri puanları şu an pasif — yakında aktif edilecek.</p>
       </div>
 
       <button

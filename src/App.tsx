@@ -1,10 +1,10 @@
-import { Cloud, CloudOff, Goal, Loader2, Menu, X } from 'lucide-react'
+import { ArrowLeft, Cloud, CloudOff, Goal, Loader2, Menu, Settings, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pitch } from './components/Pitch'
 import { PlayerForm } from './components/PlayerForm'
 import { PlayerList } from './components/PlayerList'
-import { RulesPanel } from './components/RulesPanel'
 import { SettingsPanel } from './components/SettingsPanel'
+import { SettingsView } from './components/SettingsView'
 import { TeamRosterEditor } from './components/TeamRosterEditor'
 import { Toast, type ToastMessage } from './components/Toast'
 import { TeamSummary } from './components/TeamSummary'
@@ -30,6 +30,7 @@ export default function App() {
   const [balanced, setBalanced] = useState<BalancedTeams | null>(null)
   const [toast, setToast] = useState<ToastMessage | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(isSupabaseConfigured ? 'loading' : 'offline')
 
   const hasLoadedRef = useRef(!isSupabaseConfigured)
@@ -126,6 +127,7 @@ export default function App() {
     setBalanced({ team1: outcome.result.team1, team2: outcome.result.team2 })
     showToast(`Takımlar oluşturuldu! Puan farkı: ${outcome.result.difference}.`, 'success')
     setSidebarOpen(false)
+    setSettingsOpen(false)
   }
 
   function handleMovePlayer(playerId: string, from: TeamId) {
@@ -155,11 +157,23 @@ export default function App() {
       >
         <div className="mb-3 flex items-center justify-between lg:mb-4">
           <h1 className="flex items-center gap-2 text-lg font-bold">
-            <Goal className="text-emerald-400" size={22} />
-            Kadro Oluşturucu
+            {settingsOpen ? (
+              <Settings className="text-emerald-400" size={22} />
+            ) : (
+              <Goal className="text-emerald-400" size={22} />
+            )}
+            {settingsOpen ? 'Ayarlar' : 'Kadro Oluşturucu'}
           </h1>
           <div className="flex items-center gap-2">
             <SyncIndicator status={syncStatus} />
+            <button
+              onClick={() => setSettingsOpen((v) => !v)}
+              className="rounded-full p-1.5 text-gray-400 transition hover:bg-white/10 hover:text-white"
+              aria-label={settingsOpen ? 'Oyunculara dön' : 'Ayarları aç'}
+              title={settingsOpen ? 'Oyunculara dön' : 'Ayarlar'}
+            >
+              {settingsOpen ? <ArrowLeft size={18} /> : <Settings size={18} />}
+            </button>
             <button
               onClick={() => setSidebarOpen(false)}
               className="rounded-full p-1.5 text-gray-400 hover:bg-white/10 lg:hidden"
@@ -170,31 +184,30 @@ export default function App() {
           </div>
         </div>
 
-        <div className="space-y-4">
-          <SettingsPanel
-            teamSize={teamSize}
-            onTeamSizeChange={setTeamSize}
+        {settingsOpen ? (
+          <SettingsView
             team1={team1Settings}
             team2={team2Settings}
             onTeam1Change={setTeam1Settings}
             onTeam2Change={setTeam2Settings}
-            onGenerate={handleGenerate}
-          />
-          <PlayerForm onAdd={handleAddPlayer} />
-          <PlayerList
-            players={players}
-            onDelete={handleDeletePlayer}
-            onSetPosition={handleSetPosition}
-            onToggleSubstitute={handleToggleSubstitute}
-            onRename={handleRenamePlayer}
-          />
-          <RulesPanel
             players={players.filter((p) => !p.isSubstitute)}
             rules={rules}
-            onAdd={handleAddRule}
-            onDelete={handleDeleteRule}
+            onAddRule={handleAddRule}
+            onDeleteRule={handleDeleteRule}
           />
-        </div>
+        ) : (
+          <div className="space-y-4">
+            <SettingsPanel teamSize={teamSize} onTeamSizeChange={setTeamSize} onGenerate={handleGenerate} />
+            <PlayerForm onAdd={handleAddPlayer} />
+            <PlayerList
+              players={players}
+              onDelete={handleDeletePlayer}
+              onSetPosition={handleSetPosition}
+              onToggleSubstitute={handleToggleSubstitute}
+              onRename={handleRenamePlayer}
+            />
+          </div>
+        )}
       </aside>
 
       {/* Mobile overlay */}

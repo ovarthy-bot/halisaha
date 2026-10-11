@@ -18,6 +18,22 @@ export const POSITION_SHORT_LABELS: Record<Position, string> = {
   fwd: 'FV',
 }
 
+export const POSITION_COLORS: Record<Position, string> = {
+  gk: 'text-amber-400',
+  def: 'text-sky-400',
+  mid: 'text-violet-400',
+  fwd: 'text-rose-400',
+}
+
+// <option> text color only reliably follows inline style in most browsers,
+// not Tailwind classes, so keep a hex copy alongside POSITION_COLORS.
+export const POSITION_HEX: Record<Position, string> = {
+  gk: '#fbbf24',
+  def: '#38bdf8',
+  mid: '#a78bfa',
+  fwd: '#fb7185',
+}
+
 export const KIT_COLORS = [
   { name: 'Neon Yeşil', value: '#22c55e' },
   { name: 'Camgöbeği', value: '#22d3ee' },
