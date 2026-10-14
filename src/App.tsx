@@ -1,4 +1,4 @@
-import { ArrowLeft, BookmarkPlus, Cloud, CloudOff, Goal, Loader2, Menu, Settings, Trash2, Users, X } from 'lucide-react'
+import { ArrowLeft, BookmarkPlus, Cloud, CloudOff, Goal, Loader2, Settings, Sparkles, Users, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pitch } from './components/Pitch'
 import { PlayerList } from './components/PlayerList'
@@ -29,8 +29,8 @@ export default function App() {
   const [balanced, setBalanced] = useState<BalancedTeams | null>(null)
   const [pitchPositions, setPitchPositions] = useState<PitchPositions>({})
   const [favorites, setFavorites] = useState<SavedFormation[]>([])
-  const [favoriteName, setFavoriteName] = useState('')
-  const [selectedFavoriteId, setSelectedFavoriteId] = useState('')
+  const [favoriteModalOpen, setFavoriteModalOpen] = useState(false)
+  const [favoriteNameDraft, setFavoriteNameDraft] = useState('')
   const [hasLoaded, setHasLoaded] = useState(false)
   const [toast, setToast] = useState<ToastMessage | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -157,7 +157,6 @@ export default function App() {
     }
     setBalanced({ team1: outcome.result.team1, team2: outcome.result.team2 })
     setPitchPositions({})
-    setSelectedFavoriteId('')
     showToast(`Takımlar oluşturuldu! Puan farkı: ${outcome.result.difference}.`, 'success')
     setSidebarOpen(false)
     setSettingsOpen(false)
@@ -194,9 +193,16 @@ export default function App() {
       .catch(() => setSyncStatus(isSupabaseConfigured ? 'error' : 'offline'))
   }
 
+  function openFavoriteModal() {
+    if (!balanced) return
+    setFavoriteNameDraft('')
+    setFavoriteModalOpen(true)
+  }
+
   function handleSaveFavorite() {
-    const name = favoriteName.trim()
-    if (!balanced || !name) return
+    if (!balanced) return
+    const name = favoriteNameDraft.trim()
+    if (!name) return
 
     const favorite: SavedFormation = {
       id: createId(),
@@ -208,32 +214,69 @@ export default function App() {
       createdAt: new Date().toISOString(),
     }
     setFavorites((prev) => [favorite, ...prev])
-    setSelectedFavoriteId(favorite.id)
-    setFavoriteName('')
+    setFavoriteModalOpen(false)
     showToast(`“${name}” favorilere eklendi.`, 'success')
   }
 
-  function handleLoadFavorite() {
-    const favorite = favorites.find((item) => item.id === selectedFavoriteId)
+  function handleLoadFavorite(id: string) {
+    const favorite = favorites.find((item) => item.id === id)
     if (!favorite) return
     setBalanced({ team1: [...favorite.balanced.team1], team2: [...favorite.balanced.team2] })
     setPitchPositions({ ...favorite.pitchPositions })
     setTeam1Settings({ ...favorite.team1Settings })
     setTeam2Settings({ ...favorite.team2Settings })
     showToast(`“${favorite.name}” dizilimi yüklendi.`, 'success')
+    setSettingsOpen(false)
+    setSidebarOpen(false)
   }
 
-  function handleDeleteFavorite() {
-    const favorite = favorites.find((item) => item.id === selectedFavoriteId)
+  function handleDeleteFavorite(id: string) {
+    const favorite = favorites.find((item) => item.id === id)
     if (!favorite) return
-    setFavorites((prev) => prev.filter((item) => item.id !== selectedFavoriteId))
-    setSelectedFavoriteId('')
+    setFavorites((prev) => prev.filter((item) => item.id !== id))
     showToast(`“${favorite.name}” favorilerden silindi.`, 'success')
   }
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#0a0f0d] text-white lg:flex-row">
       <Toast toast={toast} onDismiss={() => setToast(null)} />
+
+      {favoriteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0f1613] p-4 shadow-2xl">
+            <h3 className="mb-3 text-sm font-semibold text-white">Dizilime isim ver</h3>
+            <label htmlFor="favorite-name-draft" className="sr-only">Dizilim adı</label>
+            <input
+              id="favorite-name-draft"
+              autoFocus
+              value={favoriteNameDraft}
+              onChange={(event) => setFavoriteNameDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') handleSaveFavorite()
+                if (event.key === 'Escape') setFavoriteModalOpen(false)
+              }}
+              placeholder="Dizilime isim ver..."
+              maxLength={50}
+              className="mb-4 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none placeholder:text-gray-500 focus:border-emerald-400/70"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setFavoriteModalOpen(false)}
+                className="rounded-lg px-3 py-2 text-sm text-gray-400 transition hover:bg-white/10"
+              >
+                İptal
+              </button>
+              <button
+                onClick={handleSaveFavorite}
+                disabled={!favoriteNameDraft.trim()}
+                className="rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-400 px-3 py-2 text-sm font-bold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Kaydet
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sidebar */}
       <aside
@@ -252,14 +295,6 @@ export default function App() {
           </h1>
           <div className="flex items-center gap-2">
             <SyncIndicator status={syncStatus} />
-            <button
-              onClick={() => setSettingsOpen((v) => !v)}
-              className="rounded-full p-1.5 text-gray-400 transition hover:bg-white/10 hover:text-white"
-              aria-label={settingsOpen ? 'Oyunculara dön' : 'Ayarları aç'}
-              title={settingsOpen ? 'Oyunculara dön' : 'Ayarlar'}
-            >
-              {settingsOpen ? <ArrowLeft size={18} /> : <Settings size={18} />}
-            </button>
             <button
               onClick={() => setSidebarOpen(false)}
               className="rounded-full p-1.5 text-gray-400 hover:bg-white/10 lg:hidden"
@@ -285,10 +320,13 @@ export default function App() {
             onDeleteRule={handleDeleteRule}
             onAddPlayer={handleAddPlayer}
             onUpdateStats={handleUpdateStats}
+            favorites={favorites}
+            onLoadFavorite={handleLoadFavorite}
+            onDeleteFavorite={handleDeleteFavorite}
           />
         ) : (
           <div className="space-y-4">
-            <SettingsPanel teamSize={teamSize} onGenerate={handleGenerate} />
+            <SettingsPanel teamSize={teamSize} />
             <PlayerList
               players={players}
               onBench={handleBenchPlayer}
@@ -312,63 +350,6 @@ export default function App() {
 
       {/* Main pitch area */}
       <main className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 pb-24 lg:pb-4">
-        {(balanced || favorites.length > 0) && (
-          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-2 sm:p-3">
-            <div className="flex min-w-0 flex-1 basis-full gap-2 sm:basis-auto">
-              <label htmlFor="favorite-formation-name" className="sr-only">Favori dizilim adı</label>
-              <input
-                id="favorite-formation-name"
-                value={favoriteName}
-                onChange={(event) => setFavoriteName(event.target.value)}
-                onKeyDown={(event) => { if (event.key === 'Enter') handleSaveFavorite() }}
-                placeholder="Dizilime isim ver..."
-                maxLength={50}
-                className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none placeholder:text-gray-500 focus:border-emerald-400/70"
-              />
-              <button
-                onClick={handleSaveFavorite}
-                disabled={!balanced || !favoriteName.trim()}
-                className="flex shrink-0 items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2 text-sm font-bold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-40"
-                title="Mevcut takım ve saha dizilimini favorilere kaydet"
-              >
-                <BookmarkPlus size={16} />
-                <span className="hidden sm:inline">Favoriye kaydet</span>
-                <span className="sm:hidden">Kaydet</span>
-              </button>
-            </div>
-            {favorites.length > 0 && (
-              <>
-                <label htmlFor="favorite-formation-select" className="sr-only">Kayıtlı favori dizilim</label>
-                <select
-                  id="favorite-formation-select"
-                  value={selectedFavoriteId}
-                  onChange={(event) => setSelectedFavoriteId(event.target.value)}
-                  className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#111916] px-3 py-2 text-sm text-white outline-none focus:border-cyan-400/70"
-                >
-                  <option value="">Favori dizilim seç...</option>
-                  {favorites.map((favorite) => <option key={favorite.id} value={favorite.id}>{favorite.name}</option>)}
-                </select>
-                <button
-                  onClick={handleLoadFavorite}
-                  disabled={!selectedFavoriteId}
-                  className="rounded-lg border border-cyan-400/30 px-3 py-2 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-400/10 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Yükle
-                </button>
-                <button
-                  onClick={handleDeleteFavorite}
-                  disabled={!selectedFavoriteId}
-                  className="rounded-lg border border-red-400/25 p-2 text-red-300 transition hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Seçili favori dizilimi sil"
-                  title="Favoriyi sil"
-                >
-                  <Trash2 size={17} />
-                </button>
-              </>
-            )}
-          </div>
-        )}
-
         {balanced && (
           <TeamSummary
             team1Settings={team1Settings}
@@ -452,14 +433,42 @@ export default function App() {
         </button>
       )}
 
-      {/* Mobile toggle button */}
-      {!sidebarOpen && (
+      {/* Floating action button — save current formation as favorite */}
+      {balanced && !rosterOpen && (
         <button
-          onClick={() => setSidebarOpen(true)}
-          className="fixed bottom-5 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-3 text-sm font-bold text-black shadow-xl shadow-emerald-500/30 lg:hidden"
+          onClick={openFavoriteModal}
+          className="fixed right-4 bottom-36 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 px-4 py-2.5 text-sm font-bold text-black shadow-xl shadow-cyan-500/30 lg:bottom-20"
+          aria-label="Favoriye ekle"
+          title="Favoriye ekle"
         >
-          <Menu size={18} />
-          Oyuncuları Yönet ({players.length})
+          <BookmarkPlus size={18} />
+        </button>
+      )}
+
+      {/* Floating action button — toggle settings view */}
+      {!rosterOpen && (
+        <button
+          onClick={() => {
+            setSettingsOpen((v) => !v)
+            setSidebarOpen(true)
+          }}
+          className="fixed right-4 bottom-52 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 px-4 py-2.5 text-sm font-bold text-black shadow-xl shadow-cyan-500/30 lg:bottom-36"
+          aria-label={settingsOpen ? 'Oyunculara dön' : 'Ayarları aç'}
+          title={settingsOpen ? 'Oyunculara dön' : 'Ayarlar'}
+        >
+          {settingsOpen ? <ArrowLeft size={18} /> : <Settings size={18} />}
+        </button>
+      )}
+
+      {/* Floating action button — generate balanced teams */}
+      {!rosterOpen && (
+        <button
+          onClick={handleGenerate}
+          className="fixed right-4 bottom-72 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 px-4 py-2.5 text-sm font-bold text-black shadow-xl shadow-cyan-500/30 lg:bottom-52"
+          aria-label="Dengeli Takımlar Oluştur"
+          title="Dengeli Takımlar Oluştur"
+        >
+          <Sparkles size={18} />
         </button>
       )}
     </div>

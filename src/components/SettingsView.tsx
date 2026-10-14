@@ -1,5 +1,6 @@
 import { KIT_COLORS, TEAM_SIZE_OPTIONS } from '../constants'
-import type { Player, PlayerStats, Rule, TeamSettings } from '../types'
+import type { Player, PlayerStats, Rule, SavedFormation, TeamSettings } from '../types'
+import { FavoritesPanel } from './FavoritesPanel'
 import { PlayerForm } from './PlayerForm'
 import { RulesPanel } from './RulesPanel'
 import { SkillBalancePanel } from './SkillBalancePanel'
@@ -18,6 +19,9 @@ interface SettingsViewProps {
   onDeleteRule: (id: string) => void
   onAddPlayer: (player: Omit<Player, 'id'>) => void
   onUpdateStats: (id: string, stats: PlayerStats) => void
+  favorites: SavedFormation[]
+  onLoadFavorite: (id: string) => void
+  onDeleteFavorite: (id: string) => void
 }
 
 function TeamKitEditor({
@@ -85,6 +89,9 @@ export function SettingsView({
   onDeleteRule,
   onAddPlayer,
   onUpdateStats,
+  favorites,
+  onLoadFavorite,
+  onDeleteFavorite,
 }: SettingsViewProps) {
   return (
     <div className="space-y-4">
@@ -108,6 +115,8 @@ export function SettingsView({
           </select>
         </div>
       </div>
+
+      <FavoritesPanel favorites={favorites} onLoad={onLoadFavorite} onDelete={onDeleteFavorite} />
 
       <div className="space-y-3 rounded-2xl border border-white/10 bg-gray-900/50 p-4 backdrop-blur-xl">
         <h2 className="text-sm font-semibold text-white">Takım Kitleri</h2>
